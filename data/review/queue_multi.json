@@ -1,0 +1,67 @@
+{
+ "candidates": [
+  {
+   "lec": "003",
+   "start": 62.35,
+   "end": 62.715,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "multi_003_62.250",
+   "rank": 1
+  },
+  {
+   "lec": "005",
+   "start": 869.4,
+   "end": 869.765,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "multi_005_869.250",
+   "rank": 2
+  },
+  {
+   "lec": "010",
+   "start": 155.68,
+   "end": 156.065,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "multi_010_155.600",
+   "rank": 3
+  },
+  {
+   "lec": "010",
+   "start": 631.1,
+   "end": 631.425,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "multi_010_631.060",
+   "rank": 4
+  },
+  {
+   "lec": "013",
+   "start": 616.62,
+   "end": 616.935,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "multi_013_616.570",
+   "rank": 5
+  },
+  {
+   "lec": "024",
+   "start": 792.2,
+   "end": 792.565,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "multi_024_792.000",
+   "rank": 6
+  },
+  {
+   "lec": "034",
+   "start": 681.94,
+   "end": 682.465,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "multi_034_681.900",
+   "rank": 7
+  }
+ ]
+}

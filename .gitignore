@@ -1,0 +1,22 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Editor / local tool config
+.claude/
+
+# Lecture audio and caches are not distributed; labels (timestamps only) are
+data/*
+!data/playlist_ids.txt
+!data/README.md
+!data/labels/
+!data/labels_review/
+!data/review/
+*.bak
+data/review/*backup*
+results/
+downloaded.txt
+
+# Older model snapshots
+models/*.v1_*

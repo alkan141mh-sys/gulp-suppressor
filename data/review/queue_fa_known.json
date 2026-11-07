@@ -1,0 +1,64 @@
+{
+ "candidates": [
+  {
+   "lec": "012",
+   "start": 1123.48,
+   "end": 1123.58,
+   "onset": null,
+   "score": 0.0,
+   "label": "gulp_low \u00b7 no_onset",
+   "id": "final_012_1123.480",
+   "rank": 1
+  },
+  {
+   "lec": "025",
+   "start": 789.14,
+   "end": 789.23,
+   "onset": 789.14,
+   "score": 0.0,
+   "label": "gulp_low \u00b7 low_score",
+   "id": "final_025_789.140",
+   "rank": 2
+  },
+  {
+   "lec": "012",
+   "start": 714.98,
+   "end": 715.13,
+   "onset": 714.98,
+   "score": 0.0,
+   "label": "gulp_low \u00b7 low_score",
+   "id": "final_012_714.980",
+   "rank": 3
+  },
+  {
+   "lec": "029",
+   "start": 245.51,
+   "end": 245.91,
+   "onset": 245.51,
+   "score": 0.0,
+   "label": "none \u00b7 false alarm",
+   "id": "final_029_245.510",
+   "rank": 4
+  },
+  {
+   "lec": "025",
+   "start": 255.54,
+   "end": 255.73,
+   "onset": 255.54,
+   "score": 0.0,
+   "label": "none \u00b7 false alarm",
+   "id": "final_025_255.540",
+   "rank": 5
+  },
+  {
+   "lec": "025",
+   "start": 995.22,
+   "end": 995.62,
+   "onset": 995.22,
+   "score": 0.0,
+   "label": "breath \u00b7 false alarm",
+   "id": "final_025_995.220",
+   "rank": 6
+  }
+ ]
+}

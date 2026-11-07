@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Worklet Test</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 16px; background: #fcfcfb; color: #0b0b0b; }
+  pre { background: #f0efec; padding: 12px; border-radius: 6px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Worklet test</h1>
+<p>Renders results/005_excerpt.wav through extension/worklet.js in an OfflineAudioContext (128-sample
+quanta, the real AudioWorklet path) and compares every decision with the Node run of engine.js.</p>
+<pre id="out">running…</pre>
+<script type="module">
+const out = document.getElementById('out');
+try {
+  const model = await (await fetch('../model.json')).json();
+  const expected = await (await fetch('/results/005_excerpt_events.json')).json();
+  const ab = await (await fetch('/results/005_excerpt.wav')).arrayBuffer();
+  const buf = await new OfflineAudioContext(1, 1, 48000).decodeAudioData(ab);
+  const len = buf.length + Math.round(0.115 * 48000) + 512;
+  const ctx = new OfflineAudioContext(2, len, 48000);
+  await ctx.audioWorklet.addModule('../worklet.js');
+  const node = new AudioWorkletNode(ctx, 'gulp-suppressor', {
+    numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit',
+    processorOptions: { model, fa: '15', atten: 30, enabled: true },
+  });
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(node).connect(ctx.destination);
+  src.start();
+  const t = performance.now();
+  const rendered = await ctx.startRendering();
+  const sec = (performance.now() - t) / 1000;
+  const got = await new Promise((res) => {
+    node.port.onmessage = (e) => { if (e.data.type === 'events') res(e.data); };
+    node.port.postMessage({ type: 'dump' });
+  });
+  const key = (ev) => `${Math.round(ev[0] / 0.01)}_${ev[1]}`;
+  const exp = new Map(expected.events.map((e) => [key(e), e]));
+  let both = 0, agree = 0, maxdz = 0;
+  for (const e of got.events) {
+    const x = exp.get(key(e));
+    if (!x) continue;
+    both++;
+    if (x[3] === e[3]) agree++;
+    maxdz = Math.max(maxdz, Math.abs(x[2] - e[2]));
+  }
+  // Output check: the delayed signal must equal the input wherever no mute is active.
+  const inp = buf.getChannelData(0), o = rendered.getChannelData(0), D = Math.round(0.115 * 48000);
+  let maxUnmuted = 0, nMuted = 0;
+  for (let i = 0; i < inp.length; i++) {
+    const r = Math.abs(o[i + D]) / (Math.abs(inp[i]) + 1e-9);
+    if (Math.abs(inp[i]) > 1e-3) { if (r < 0.5) nMuted++; else maxUnmuted = Math.max(maxUnmuted, Math.abs(o[i + D] - inp[i])); }
+  }
+  const res = {
+    ok: both === expected.events.length && both === got.events.length && agree === both && got.late === 0,
+    decisions_worklet: got.events.length, decisions_node: expected.events.length, matched: both,
+    fire_agreement: `${agree}/${both}`, max_score_diff: maxdz, mutes: got.nMutes, late: got.late,
+    render_seconds: +sec.toFixed(2), audio_seconds: +(buf.length / 48000).toFixed(1),
+    max_abs_diff_outside_mutes: maxUnmuted, muted_samples: nMuted,
+  };
+  out.textContent = JSON.stringify(res, null, 1);
+  window.__result = res;
+} catch (e) {
+  out.textContent = 'FAILED: ' + e + '\n' + (e.stack || '');
+  window.__result = { ok: false, error: String(e) };
+}
+</script>
+</body>
+</html>

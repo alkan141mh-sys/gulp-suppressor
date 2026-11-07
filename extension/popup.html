@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Gulp Suppressor</title>
+<style>
+  :root { --bg: #fcfcfb; --fg: #0b0b0b; --muted: #52514e; --line: #e4e3df; --accent: #2a78d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1a1a19; --fg: #f0efec; --muted: #c3c2b7; --line: #383835; --accent: #3987e5; }
+  }
+  body { margin: 0; width: 280px; padding: 14px 16px; background: var(--bg); color: var(--fg);
+         font: 13px/1.45 system-ui, "Segoe UI", sans-serif; }
+  h1 { font-size: 15px; margin: 0 0 10px; }
+  label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 8px 0; }
+  select { font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+  .status { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); }
+  .status b { color: var(--fg); font-weight: 600; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <h1>Gulp Suppressor</h1>
+  <label>Açık <input type="checkbox" id="enabled"></label>
+  <label>Hassasiyet
+    <select id="fa">
+      <option value="0.5">Çok temkinli (saatte ~0.5 yanlış alarm, %86)</option>
+      <option value="1">Temkinli (~1, %90)</option>
+      <option value="2">Varsayılan (~2, %93)</option>
+      <option value="3">Hassas (~3, %95)</option>
+      <option value="5">Agresif (~5, %99)</option>
+    </select>
+  </label>
+  <label>Kısma
+    <select id="atten">
+      <option value="15">−15 dB (yumuşak)</option>
+      <option value="30">−30 dB (neredeyse sessiz)</option>
+      <option value="60">−60 dB (tam sessiz)</option>
+    </select>
+  </label>
+  <div class="status" id="status">Durum okunuyor…</div>
+  <p class="hint">Yalnızca Buders kanalının videolarında çalışır; diğer videolarda ses hiç işlenmez. Hassasiyet arttıkça daha çok gulp yakalanır (yüzde), ama gulp olmayan sesler de daha sık
+    kısılır. Sayılar önden okuma modu içindir: eğitim derslerinde, kör denetimle düzeltilmiş gerçek yanlış
+    alarmlar. Canlı modda yanlış alarm daha fazladır.</p>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gulp İnceleme</title>
+<style>
+  :root {
+    --bg: #15171c; --panel: #1d2027; --line: #2a2e38; --fg: #e7e9ee; --muted: #8f97a6;
+    --accent: #ffb454; --sel: rgba(255, 180, 84, .22); --gulp: #ff7a59; --keep: #5cc8a8; --skip: #8f97a6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: grid; grid-template-columns: 330px 1fr;
+         background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, "Segoe UI", sans-serif; }
+  aside { display: flex; flex-direction: column; border-right: 1px solid var(--line); min-height: 0; }
+  .hdr { padding: 12px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+  .hdr b { font-size: 15px; }
+  .muted { color: var(--muted); }
+  #rows { overflow: auto; flex: 1; }
+  .row { display: grid; grid-template-columns: 38px 34px 1fr auto; gap: 6px; align-items: center;
+         padding: 5px 10px; border-bottom: 1px solid var(--line); cursor: pointer; font-variant-numeric: tabular-nums; }
+  .row:hover { background: #232733; }
+  .row.cur { background: #2b3242; box-shadow: inset 3px 0 var(--accent); }
+  .tag { font-size: 12px; padding: 1px 6px; border-radius: 9px; background: #2a2e38; color: var(--muted); }
+  .tag.h1 { background: rgba(255, 122, 89, .18); color: var(--gulp); }
+  .tag.h0 { background: rgba(92, 200, 168, .16); color: var(--keep); }
+  main { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; overflow: auto; }
+  #info { font-size: 15px; font-variant-numeric: tabular-nums; }
+  #info .big { font-size: 18px; font-weight: 600; }
+  .wrap { position: relative; }
+  canvas { display: block; width: 100%; height: 400px; background: #000; border-radius: 6px; cursor: crosshair; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
+           padding: 7px 10px; font: inherit; cursor: pointer; }
+  button:hover { border-color: #3d4352; }
+  button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  button kbd { display: inline-block; min-width: 18px; margin-right: 6px; padding: 0 4px; border-radius: 4px;
+               background: #2a2e38; color: var(--accent); font: 12px ui-monospace, monospace; text-align: center; }
+  button.h1 { border-left: 3px solid var(--gulp); }
+  button.h0 { border-left: 3px solid var(--keep); }
+  button.skip { border-left: 3px solid var(--skip); }
+  .help { color: var(--muted); font-size: 13px; margin: 0; }
+  #msg { min-height: 20px; color: var(--accent); }
+  label.chk { display: flex; gap: 6px; align-items: center; color: var(--muted); cursor: pointer; }
+  [hidden] { display: none !important; }
+  #recheckOpts { display: flex; flex-direction: column; gap: 6px; }
+  select, input[type=number] { background: var(--panel); color: var(--fg); border: 1px solid var(--line);
+                               border-radius: 6px; padding: 5px 6px; font: inherit; }
+</style>
+</head>
+<body>
+<aside>
+  <div class="hdr">
+    <b>Adaylar</b>
+    <span id="progress" class="muted"></span>
+    <select id="source">
+      <option value="fa_known">Son kontrol: 3 kaçırılan gulp + 3 yanlış alarm</option>
+      <option value="audit">Kör denetim (karışık, skor gizli)</option>
+      <option value="confirmed">Onaylı gulp'lar (153)</option>
+      <option value="hidden">1 · Gizli gulp avı (karışık, skor gizli)</option>
+      <option value="missed">2 · Kaçırılan gulp'lar: neden?</option>
+      <option value="multi">3 · Çok patlamalı etiketler</option>
+      <option value="ranker">Aday bulucu</option>
+      <option value="false_alarm">Dedektörün yanlış alarmları</option>
+      <option value="onset_fa">Başlangıç sınıflandırıcısının yanlış alarmları</option>
+      <option value="all">Tüm kaynaklar</option>
+    </select>
+    <select id="mode">
+      <option value="open">Bakılmamışlar</option>
+      <option value="all">Tümü</option>
+      <option value="recheck">Kör tekrar kontrol</option>
+    </select>
+    <div id="recheckOpts" hidden>
+      <label class="chk">Sıra <input type="number" id="recheckFrom" value="100" min="1" style="width:64px">
+        – <input type="number" id="recheckTo" value="160" min="1" style="width:64px"></label>
+      <label class="chk"><input type="checkbox" id="recheckGulpsOnly"> Sadece gulp kararları</label>
+    </div>
+  </div>
+  <div id="rows"></div>
+</aside>
+<main>
+  <div id="info">Yükleniyor…</div>
+  <div class="wrap"><canvas id="spec"></canvas></div>
+  <div class="bar">
+    <button id="bSel"><kbd>Space</kbd>Seçimi çal</button>
+    <button id="bAll"><kbd>C</kbd>Tamamını çal</button>
+    <button id="bReset"><kbd>R</kbd>Seçimi sıfırla</button>
+    <button id="bPrev"><kbd>↑</kbd>Önceki</button>
+    <button id="bNext"><kbd>↓</kbd>Sonraki</button>
+    <button id="bClear"><kbd>⌫</kbd>Kararı sil</button>
+    <label class="chk"><input type="checkbox" id="autoplay" checked> Açılınca otomatik çal</label>
+  </div>
+  <p class="help" id="qhelp"></p>
+  <div class="bar" id="keys"></div>
+  <div class="bar" id="tags" hidden></div>
+  <div id="msg"></div>
+  <p class="help">
+    Spektrogramda sürükleyerek seçimi yeniden çiz; <b>Shift + sürükle</b> ikinci bir aralık ekler,
+    bir aralığa tıklamak onu etkin yapar (turuncu), <b>Esc</b> etkin olan dışındakileri siler.
+    Tek tıklama o noktadan çalar. Kaydedince her aralık ayrı bir etiket olur. Etiket tuşuna basınca karar kaydedilir ve bir sonraki adaya geçilir.
+    <code>none</code>: korunacak özel bir ses yok (konuşma, sessizlik). Test dersleri (037–040) burada hiç yok.
+  </p>
+</main>
+<script>
+const LABELS = [
+  ['1', 'gulp_low', 'Az fark edilen gulp', 'h1'],
+  ['2', 'gulp', 'Gulp', 'h1'],
+  ['3', 'gulp_high', 'Çok belirgin gulp', 'h1'],
+  ['O', 'gulp_overlap', 'Konuşma üstünde gulp', 'h1'],
+  ['N', 'not_gulp', 'Benzer ama gulp değil', 'h0'],
+  ['B', 'breath', 'Nefes', 'h0'],
+  ['M', 'mouth', 'Ağız sesi', 'h0'],
+  ['X', 'none', 'Hiçbiri', 'h0'],
+  ['U', 'unsure', 'Emin değilim', 'skip'],
+];
+const CLASS = Object.fromEntries(LABELS.map(l => [l[1], l[3]]));
+const CTX = 1.5;            // seconds of context on each side of the candidate
+const FMAX = 8000;          // the lectures carry almost nothing above 8 kHz
+// Fixed colour scale in dB (same STFT on every clip). Scaling each clip to its own maximum made
+// the room noise look bright in clips without speech. Measured: loud speech peaks at 43-47 dB,
+// background bins sit near -35 dB in every lecture.
+const DB_LO = -40, DB_HI = 45;
+const canvas = document.getElementById('spec'), g = canvas.getContext('2d');
+const actx = new AudioContext();
+
+let cands = [], dec = {}, cur = -1, clip = null, sel = null, drag = null, loadToken = 0;
+// Several intervals per record: sels holds them all, ai is the active one, sel === sels[ai].
+let sels = [], ai = 0;
+const spansOf = d => d.spans ? d.spans.map(s => [...s]) : [[d.start, d.end]];
+function setSels(list, active = 0) { sels = list; ai = active; sel = sels[ai]; }
+let src = null, playStart = 0, playFrom = 0, playLen = 0;
+
+const $ = id => document.getElementById(id);
+const fmt = t => { const m = Math.floor(t / 60); return `${m}:${(t - 60 * m).toFixed(3).padStart(6, '0')}`; };
+const decOf = c => dec[c.id];
+const mode = () => $('mode').value;
+// Blind re-check: earlier gulp labels are hidden until re-labelled, so the old answer
+// cannot anchor the new one. Both versions are kept for the agreement measurement.
+const blindHidden = d => mode() === 'recheck' && d && !d.rechecked;
+const SRC_PREFIX = { ranker: '#', false_alarm: 'Y', onset_fa: 'B', hidden: 'G', missed: 'K', multi: 'Ç', confirmed: 'O', audit: 'D', fa_known: '#' };
+const SRC_NAME = { ranker: 'aday', false_alarm: 'yanlış alarm', onset_fa: 'başlangıç yanlış alarmı',
+                   hidden: 'gizli gulp adayı', missed: 'kaçırılan gulp', multi: 'çok patlamalı etiket',
+                   confirmed: 'onaylı gulp', audit: 'kör denetim', fa_known: 'son kontrol' };
+const BLIND = new Set(['hidden', 'audit']);        // score hidden, order shuffled
+// Queues that ask WHY (tags on an existing label) instead of asking for a label.
+const TAG_SETS = {
+  missed: [['A', 'after_speech', 'Konuşmanın üstünde / hemen ardında'], ['S', 'quiet', 'Çok sessiz'],
+           ['D', 'multi_burst', 'Birden çok patlama'], ['F', 'unusual', 'Alışılmadık tını'],
+           ['G', 'edges_wrong', 'Etiket sınırları yanlış'], ['H', 'not_gulp', 'Aslında gulp değil']],
+  multi: [['A', 'one_gulp', 'Tek gulp'], ['S', 'two_sounds', 'İki ayrı ses'], ['H', 'not_gulp', 'Gulp değil']],
+  confirmed: [['J', 'checked_ok', 'Doğru, gulp'], ['H', 'not_gulp', 'Gulp değil'],
+              ['G', 'edges_wrong', 'Sınırlar yanlış'], ['S', 'two_sounds', 'İki ayrı ses']],
+};
+const HELP = {
+  fa_known: 'Varsayılan ayarda (saatte ~2 yanlış alarm) dedektörün hâlâ yanıldığı sesler. 1-3: kaçırılan gulp\'lar ' +
+            '(etikette nedeni yazıyor), 4-6: gulp sandığı ama senin gulp değil dediğin sesler. Gezmek için ↓.',
+  audit: 'Bu sesi etiketle: gulp mu, değil mi? Karışık bir liste; bazıları dedektörün alarmları, bazıları ' +
+         'kontrol amaçlı. Sınırlar sesten ölçülüp hazır seçildi; sınırları düzeltmen gerekmiyor, yalnızca ' +
+         'etiketi seç. Emin değilsen "unsure".',
+  hidden: 'Bu sesi etiketle. Gulp ise sınırlar sesten ölçülüp hazır seçildi; gerekirse sürükle. ' +
+          'Yeşil çizgi: dedektörün bulduğu başlangıç. Mavi alan: sınıflandırıcının gördüğü ilk 100 ms.',
+  missed: 'Bu gulp etiketli ama dedektör kaçırıyor. Neden olabileceğini işaretle (birden fazla seçilebilir), ' +
+          'sonra Enter. Yeşil çizgi yoksa, başlangıç dedektörü bu gulp\'ı hiç bulamamış demek.',
+  multi: 'Bu gulp etiketinin içinde birbirinden ayrı patlamalar var. Tek bir gulp mu, iki ayrı ses mi? Seç, sonra Enter.',
+  confirmed: 'Gulp olarak etiketlediğin bir ses; turuncu alan senin etiketinin sınırları. Doğruysa J, sonra Enter. ' +
+             'Gulp değilse H, sonra Enter. Sınırlar yanlışsa önce doğru sınırları sürükleyerek çiz (iki ayrı parça ' +
+             'için ikincisini Shift + sürükle ile ekle), sonra G, sonra Enter: etiket bu sınırlarla kullanılır. ' +
+             'Yalnızca dinleyip geçmek için ↓. Fazla bir aralığı silmek için üstüne sağ tıkla.',
+};
+let tagSel = new Set();
+const tagMode = () => !!TAG_SETS[cands[cur]?.source];
+function inView(c, i) {
+  const d = decOf(c), src = $('source').value;
+  if (src !== 'all' && c.source !== src) return false;
+  if (mode() === 'all') return true;
+  if (mode() === 'open') return !d || i === cur;
+  if (c.rank < +$('recheckFrom').value || c.rank > +$('recheckTo').value) return false;
+  if (i === cur) return true;
+  // All decisions by default, so a sound first called 'none' can come back as a gulp (and vice versa).
+  return !!d && (!$('recheckGulpsOnly').checked || CLASS[d.label] === 'h1' || d.rechecked);
+}
+function pending(c, i) {
+  const d = decOf(c);
+  return inView(c, i) && (mode() === 'recheck' ? !!d && !d.rechecked : !d);
+}
+
+async function init() {
+  const s = await (await fetch('/api/state')).json();
+  cands = s.candidates; dec = s.decisions;
+  if (!cands.length) { $('info').textContent = 'Aday yok. Önce tools/find_candidates.py çalıştır.'; return; }
+  const keys = $('keys');
+  for (const [k, lab, text, cls] of LABELS) {
+    const b = document.createElement('button');
+    b.className = cls; b.dataset.label = lab;
+    b.innerHTML = `<kbd>${k}</kbd>${text} <span class="muted">${lab}</span>`;
+    b.onclick = () => decide(lab);
+    keys.appendChild(b);
+  }
+  // Start on the newest set that still has work in it.
+  const open = s => cands.some(c => c.source === s && !decOf(c));
+  // Reopen the queue chosen last time; otherwise the confirmed gulps (the current review pass),
+  // then the first queue with work left.
+  let last = null;
+  try { last = localStorage.getItem('gulp.source'); } catch (e) {}
+  const known = [...$('source').options].map(o => o.value);
+  // An unfinished blind audit comes first; then the queue chosen last time; then the confirmed
+  // gulps; then the first queue with work left.
+  $('source').value = cands.some(c => c.source === 'audit' && !decOf(c)) ? 'audit'
+    : known.includes(last) && (last === 'all' || cands.some(c => c.source === last)) ? last
+    : cands.some(c => c.source === 'confirmed') ? 'confirmed'
+    : ['hidden', 'missed', 'multi', 'onset_fa', 'false_alarm', 'ranker'].find(open) || 'ranker';
+  // A link can open one record directly: /?src=<source>&id=<record id> (or &n=<rank>).
+  const q = new URLSearchParams(location.search);
+  if (q.get('src') && known.includes(q.get('src'))) {
+    $('source').value = q.get('src');
+    sourceChanged();
+    const i = cands.findIndex(c => c.source === q.get('src') && (q.get('id') ? c.id === q.get('id') : String(c.rank) === q.get('n')));
+    if (i >= 0) { $('mode').value = 'all'; load(i); }
+    return;
+  }
+  sourceChanged();
+}
+
+function sourceChanged() {
+  try { localStorage.setItem('gulp.source', $('source').value); } catch (e) {}
+  // The confirmed list is reviewed in passes, so it always shows every
+  // record in order; the other queues show what is still undecided.
+  if ($('source').value === 'confirmed' || $('source').value === 'fa_known') {
+    $('mode').value = 'all';
+    $('recheckOpts').hidden = true;
+    document.activeElement.blur();
+    return load(cands.findIndex(c => c.source === $('source').value));
+  }
+  modeChanged();
+}
+
+function renderList() {
+  const rows = $('rows');
+  rows.innerHTML = '';
+  let shown = 0, done = 0;
+  cands.forEach((c, i) => {
+    const d = decOf(c);
+    if (!inView(c, i)) return;
+    shown++; if (d && d.rechecked) done++;
+    const r = document.createElement('div');
+    r.className = 'row' + (i === cur ? ' cur' : '');
+    const tag = !d ? `<span class="tag">${BLIND.has(c.source) ? '·' : TAG_SETS[c.source] ? (c.label || '') : c.score.toFixed(1)}</span>`
+      : d.label === 'note' ? `<span class="tag h0">${(d.tags || []).join(', ')}</span>`
+      : blindHidden(d) ? '<span class="tag">?</span>'
+      : `<span class="tag ${CLASS[d.label]}">${d.label}</span>`;
+    r.innerHTML = `<span class="muted">${SRC_PREFIX[c.source]}${c.rank}</span><span>${c.lec}</span><span>${fmt(c.start)}</span><span>${tag}</span>`;
+    r.onclick = () => load(i);
+    rows.appendChild(r);
+    if (i === cur) requestAnimationFrame(() => r.scrollIntoView({ block: 'nearest' }));
+  });
+  const src = $('source').value, inSrc = cands.filter(c => src === 'all' || c.source === src);
+  $('progress').textContent = mode() === 'recheck'
+    ? `${done} / ${shown} tekrar kontrol edildi`
+    : `${inSrc.filter(decOf).length} / ${inSrc.length} incelendi`;
+}
+
+function renderInfo() {
+  const c = cands[cur], d = decOf(c);
+  const spanText = sels.length > 1
+    ? `${sels.length} aralık: ` + [...sels].sort((p, q) => p[0] - q[0]).map(s => `${fmt(s[0])} – ${fmt(s[1])}`).join(', ')
+    : `${fmt(sel[0])} – ${fmt(sel[1])}`;
+  $('info').innerHTML = `<span class="big">Ders ${c.lec} · ${spanText}</span>` +
+    ` <span class="muted">(${sels.length > 1 ? 'etkin aralık ' + (ai + 1) + ': ' : ''}${Math.round((sel[1] - sel[0]) * 1000)} ms · ${SRC_NAME[c.source]} ` +
+    `${SRC_PREFIX[c.source]}${c.rank}` +
+    (BLIND.has(c.source) || c.source === 'confirmed' || c.source === 'fa_known' ? '' : c.stage1_miss ? ' · başlangıç bulunamadı'
+      : ` · skor z = ${c.score.toFixed(2)}`) +
+    (c.label ? ` · etiket: ${c.label}` : '') + ')</span>' +
+    (blindHidden(d) ? ' · <b>kör kontrol:</b> eski etiket gizli'
+      : d && d.label === 'note' ? ` · not: <b>${(d.tags || []).join(', ')}</b>`
+      : d ? ` · karar: <b>${d.label}</b>` : '');
+  document.querySelectorAll('#keys button').forEach(b =>
+    b.classList.toggle('on', !!d && !blindHidden(d) && b.dataset.label === d.label));
+  const tm = tagMode();
+  $('keys').hidden = tm;
+  $('tags').hidden = !tm;
+  $('qhelp').textContent = HELP[c.source] || '';
+  if (tm) {
+    $('tags').innerHTML = '';
+    for (const [k, tag, text] of TAG_SETS[c.source]) {
+      const b = document.createElement('button');
+      b.className = 'h0' + (tagSel.has(tag) ? ' on' : '');
+      b.innerHTML = `<kbd>${k}</kbd>${text}`;
+      b.onclick = () => toggleTag(tag);
+      $('tags').appendChild(b);
+    }
+    const s = document.createElement('button');
+    s.className = 'h1';
+    s.innerHTML = '<kbd>Enter</kbd>Kaydet';
+    s.onclick = saveNote;
+    $('tags').appendChild(s);
+  }
+}
+
+async function load(i) {
+  if (i < 0 || i >= cands.length) return;
+  stop();
+  const token = ++loadToken;
+  cur = i;
+  const c = cands[i], d = decOf(c);
+  setSels(d ? spansOf(d) : [[c.start, c.end]]);
+  const lo = Math.min(...sels.map(s => s[0])), hi = Math.max(...sels.map(s => s[1]));
+  tagSel = new Set(d && d.tags ? d.tags : []);
+  const t0 = Math.max(0, Math.min(c.start, lo) - CTX),
+        t1 = Math.max(c.end, hi) + CTX;
+  renderList(); renderInfo();
+  const ab = await (await fetch(`/api/audio?lec=${c.lec}&t0=${t0}&t1=${t1}`)).arrayBuffer();
+  const buf = await actx.decodeAudioData(ab);
+  if (token !== loadToken) return;          // the user already moved on
+  clip = { t0, t1: t0 + buf.duration, buf, img: spectrogram(buf) };
+  draw();
+  if ($('autoplay').checked) play(clip.t0, clip.t1);
+}
+
+// ---- spectrogram (STFT, 1024-point Hann, 75% overlap) ----
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const a = -2 * Math.PI / len, wr = Math.cos(a), wi = Math.sin(a);
+    for (let i = 0; i < n; i += len) {
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const p = i + k, q = p + len / 2;
+        const tr = re[q] * cr - im[q] * ci, ti = re[q] * ci + im[q] * cr;
+        re[q] = re[p] - tr; im[q] = im[p] - ti; re[p] += tr; im[p] += ti;
+        [cr, ci] = [cr * wr - ci * wi, cr * wi + ci * wr];
+      }
+    }
+  }
+}
+
+const STOPS = [[0, 0, 4], [40, 11, 84], [101, 21, 110], [159, 42, 99], [212, 72, 66], [245, 125, 21], [250, 193, 39], [252, 255, 164]];
+function color(v) {
+  const x = Math.min(1, Math.max(0, v)) * (STOPS.length - 1), i = Math.min(STOPS.length - 2, Math.floor(x)), f = x - i;
+  return STOPS[i].map((c, k) => c + f * (STOPS[i + 1][k] - c));
+}
+
+function spectrogram(buf) {
+  const x = buf.getChannelData(0), fs = buf.sampleRate, N = 1024, H = 256;
+  const nb = Math.min(N / 2, Math.ceil(FMAX / (fs / N)));
+  const T = Math.max(1, Math.floor((x.length - N) / H) + 1);
+  const win = Float32Array.from({ length: N }, (_, n) => 0.5 - 0.5 * Math.cos(2 * Math.PI * n / N));
+  const re = new Float32Array(N), im = new Float32Array(N), db = new Float32Array(T * nb);
+  for (let t = 0; t < T; t++) {
+    for (let n = 0; n < N; n++) re[n] = (x[t * H + n] || 0) * win[n];
+    im.fill(0); fft(re, im);
+    for (let k = 0; k < nb; k++) {
+      const v = 10 * Math.log10(re[k] * re[k] + im[k] * im[k] + 1e-12);
+      db[t * nb + k] = v;
+    }
+  }
+  const off = new OffscreenCanvas(T, nb), og = off.getContext('2d'), img = og.createImageData(T, nb);
+  for (let t = 0; t < T; t++) for (let k = 0; k < nb; k++) {
+    const [r, gg, b] = color((db[t * nb + k] - DB_LO) / (DB_HI - DB_LO));
+    const p = 4 * ((nb - 1 - k) * T + t);
+    img.data[p] = r; img.data[p + 1] = gg; img.data[p + 2] = b; img.data[p + 3] = 255;
+  }
+  og.putImageData(img, 0, 0);
+  return off;
+}
+
+// ---- drawing ----
+const PAD_L = 44, PAD_B = 22;
+function xOf(t) { return PAD_L + (t - clip.t0) / (clip.t1 - clip.t0) * (canvas.width - PAD_L); }
+function tOf(px) { return clip.t0 + (px - PAD_L) / (canvas.width - PAD_L) * (clip.t1 - clip.t0); }
+
+function draw() {
+  const dpr = devicePixelRatio || 1, W = Math.round(canvas.clientWidth * dpr), Hh = Math.round(canvas.clientHeight * dpr);
+  if (canvas.width !== W || canvas.height !== Hh) { canvas.width = W; canvas.height = Hh; }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, Hh);
+  if (!clip) return;
+  const plotH = Hh - PAD_B * dpr, pl = PAD_L;
+  // Waveform on top (like Audacity's multi-view), spectrogram below.
+  const waveH = Math.round(plotH * 0.32), specTop = waveH + Math.round(4 * dpr), specH = plotH - specTop;
+  drawWave(pl, W, waveH, dpr);
+  g.imageSmoothingEnabled = true;
+  g.drawImage(clip.img, pl, specTop, W - pl, specH);
+  // selection
+  // Intervals: the active one orange, the others teal, each numbered.
+  sels.forEach((s, i) => {
+    const a = xOf(s[0]), b = xOf(s[1]), on = i === ai;
+    g.fillStyle = on ? 'rgba(255,180,84,.22)' : 'rgba(92,200,168,.18)'; g.fillRect(a, 0, b - a, plotH);
+    g.strokeStyle = on ? '#ffb454' : '#5cc8a8'; g.lineWidth = 2 * dpr;
+    g.beginPath(); g.moveTo(a, 0); g.lineTo(a, plotH); g.moveTo(b, 0); g.lineTo(b, plotH); g.stroke();
+    if (sels.length > 1) {
+      g.fillStyle = on ? '#ffb454' : '#5cc8a8'; g.font = `bold ${12 * dpr}px system-ui`; g.textBaseline = 'top';
+      g.fillText(String(i + 1), a + 4 * dpr, 4 * dpr);
+    }
+  });
+  // detector markers: onset (green) and the 100 ms the classifier sees (blue)
+  const cc = cands[cur];
+  if (cc && cc.onset != null) {
+    const o = xOf(cc.onset), w = xOf(cc.onset + 0.1) - o;
+    g.fillStyle = 'rgba(90,150,255,.18)'; g.fillRect(o, 0, w, plotH);
+    g.fillStyle = '#5cc8a8'; g.fillRect(o - dpr, 0, 2 * dpr, plotH);
+  }
+  // axes
+  g.fillStyle = '#8f97a6'; g.font = `${11 * dpr}px system-ui`; g.textBaseline = 'middle';
+  for (let f = 0; f <= FMAX; f += 2000) {
+    const y = specTop + specH * (1 - f / FMAX);
+    g.fillText(f ? `${f / 1000}k` : '0', 6 * dpr, Math.min(plotH - 6 * dpr, Math.max(specTop + 6 * dpr, y)));
+  }
+  g.fillText(`×${clip.waveGain < 10 ? clip.waveGain.toFixed(1) : Math.round(clip.waveGain)}`, 6 * dpr, waveH / 2);
+  g.textBaseline = 'top';
+  const step = 0.5;
+  for (let t = Math.ceil(clip.t0 / step) * step; t < clip.t1; t += step) {
+    const x = xOf(t);
+    g.fillRect(x, plotH, 1, 4 * dpr);
+    g.fillText(fmt(t).slice(0, -2), x + 3 * dpr, plotH + 4 * dpr);
+  }
+  // playhead
+  if (src) {
+    const t = playFrom + (actx.currentTime - playStart);
+    if (t <= playFrom + playLen) {
+      const x = xOf(t);
+      g.fillStyle = '#fff'; g.fillRect(x - dpr / 2, 0, 1.5 * dpr, plotH);
+    }
+  }
+}
+
+function drawWave(pl, W, waveH, dpr) {
+  // Min/max envelope per pixel column. Gulps are 30-50 dB below speech, so a full-scale
+  // waveform would show them as a flat line: the scale follows the SELECTION's peak instead
+  // (the ×N label), and louder audio around it is clipped at the edges of the strip.
+  const x = clip.buf.getChannelData(0), fs = clip.buf.sampleRate, cols = W - pl;
+  if (cols <= 0) return;                     // canvas not laid out yet (hidden tab)
+  if (!clip.env || clip.env.cols !== cols) {
+    const mins = new Float32Array(cols), maxs = new Float32Array(cols), per = x.length / cols;
+    for (let c = 0; c < cols; c++) {
+      let lo = Infinity, hi = -Infinity;
+      for (let i = Math.floor(c * per), e = Math.min(x.length, Math.floor((c + 1) * per)); i < e; i++) {
+        if (x[i] < lo) lo = x[i];
+        if (x[i] > hi) hi = x[i];
+      }
+      mins[c] = lo === Infinity ? 0 : lo; maxs[c] = hi === -Infinity ? 0 : hi;
+    }
+    clip.env = { cols, mins, maxs };
+  }
+  const selKey = JSON.stringify(sels);
+  if (!clip.selPeak || clip.selPeakFor !== selKey) {
+    let pk = 0;
+    for (const s of sels) {
+      for (let i = Math.max(0, Math.floor((s[0] - clip.t0) * fs)), e = Math.min(x.length, Math.ceil((s[1] - clip.t0) * fs)); i < e; i++) {
+        pk = Math.max(pk, Math.abs(x[i]));
+      }
+    }
+    clip.selPeak = Math.max(pk, 1e-4);
+    clip.selPeakFor = selKey;
+  }
+  clip.waveGain = 1 / (1.15 * clip.selPeak);
+  const mid = waveH / 2, half = waveH / 2 - 2 * dpr;
+  g.fillStyle = '#0b0d12'; g.fillRect(pl, 0, cols, waveH);
+  g.fillStyle = '#2a2e38'; g.fillRect(pl, mid, cols, 1);
+  g.fillStyle = '#7aa7ff';
+  for (let c = 0; c < cols; c++) {
+    const top = mid - Math.min(1, clip.env.maxs[c] * clip.waveGain) * half;
+    const bot = mid - Math.max(-1, clip.env.mins[c] * clip.waveGain) * half;
+    g.fillRect(pl + c, top, 1, Math.max(1, bot - top));
+  }
+}
+
+// ---- playback ----
+function stop() {
+  if (src) { const s = src; src = null; try { s.stop(); } catch (e) {} }
+}
+function play(a, b) {
+  if (!clip) return;
+  stop();
+  if (actx.state === 'suspended') actx.resume();
+  a = Math.max(clip.t0, a); b = Math.min(clip.t1, b);
+  if (b - a < 0.01) return;
+  const s = actx.createBufferSource();
+  s.buffer = clip.buf; s.connect(actx.destination);
+  s.onended = () => { if (src === s) { src = null; draw(); } };
+  s.start(0, a - clip.t0, b - a);
+  src = s; playStart = actx.currentTime; playFrom = a; playLen = b - a;
+  const tick = () => { if (src === s) { draw(); requestAnimationFrame(tick); } };
+  requestAnimationFrame(tick);
+}
+
+// ---- decisions ----
+async function decide(label) {
+  const c = cands[cur];
+  if (!c) return;
+  const sorted = [...sels].sort((p, q) => p[0] - q[0]);
+  const body = { id: c.id, lec: c.lec, start: sorted[0][0], end: Math.max(...sorted.map(s => s[1])), label,
+                 recheck: mode() === 'recheck', tags: label === 'note' ? [...tagSel] : [],
+                 spans: sorted.length > 1 ? sorted : [] };
+  const r = await fetch('/api/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) { $('msg').textContent = 'Kaydedilemedi: sunucu hatası.'; return; }
+  dec = (await r.json()).decisions;
+  $('msg').textContent = label
+    ? `Kaydedildi: ${c.lec} ${fmt(sorted[0][0])}${sorted.length > 1 ? ` (${sorted.length} aralık)` : ''} → ${label}`
+    : 'Karar silindi.';
+  if (label) {
+    // In 'Tümü' the list is walked in order; otherwise jump to the next undecided record.
+    const next = mode() === 'all'
+      ? cands.findIndex((x, i) => i > cur && inView(x, i))
+      : cands.findIndex((x, i) => i > cur && pending(x, i));
+    if (next >= 0) return load(next);
+    $('msg').textContent += ' · Bu listede bakılacak aday kalmadı.';
+  }
+  renderList(); renderInfo();
+}
+
+function toggleTag(tag) {
+  tagSel.has(tag) ? tagSel.delete(tag) : tagSel.add(tag);
+  renderInfo();
+}
+// Right-click deletes the interval under the pointer when there are several (saved with the
+// note, like any other edge change).
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (!clip) return;
+  const t = tOf(e.offsetX * (devicePixelRatio || 1));
+  const i = sels.findIndex(s => t >= s[0] && t <= s[1]);
+  if (i < 0) return;
+  if (sels.length === 1) { $('msg').textContent = 'Tek aralık silinmez; yeniden çizebilirsin.'; return; }
+  setSels(sels.filter((_, j) => j !== i), Math.max(0, Math.min(ai > i ? ai - 1 : ai, sels.length - 2)));
+  $('msg').textContent = 'Aralık silindi (kaydetmek için Enter).';
+  renderInfo(); draw();
+});
+
+function saveNote() {
+  if (!tagSel.size) { $('msg').textContent = 'Önce en az bir seçenek işaretle.'; return; }
+  decide('note');
+}
+
+// ---- input ----
+// Drag: redraw the active interval. Shift + drag: add a new interval.
+// Click inside an interval: make it active and play from there. Esc: keep only the active one.
+canvas.addEventListener('mousedown', e => {
+  if (!clip) return;
+  const px = (e.offsetX) * (devicePixelRatio || 1);
+  drag = { x: px, t: tOf(px), moved: false, add: e.shiftKey, added: false };
+});
+window.addEventListener('mousemove', e => {
+  if (!drag) return;
+  const r = canvas.getBoundingClientRect(), px = (e.clientX - r.left) * (devicePixelRatio || 1);
+  if (Math.abs(px - drag.x) < 4) return;
+  drag.moved = true;
+  const t = Math.min(clip.t1, Math.max(clip.t0, tOf(px)));
+  if (drag.add && !drag.added) { sels.push([drag.t, drag.t]); ai = sels.length - 1; drag.added = true; }
+  sels[ai] = [Math.min(drag.t, t), Math.max(drag.t, t)];
+  sel = sels[ai];
+  renderInfo(); draw();
+});
+window.addEventListener('mouseup', () => {
+  if (!drag) return;
+  if (!drag.moved) {
+    const hit = sels.findIndex(s => drag.t >= s[0] && drag.t <= s[1]);
+    if (hit >= 0 && hit !== ai) { ai = hit; sel = sels[ai]; renderInfo(); draw(); }
+    play(drag.t, clip.t1);
+  }
+  drag = null;
+});
+
+const KEYMAP = Object.fromEntries(LABELS.map(l => [l[0].toLowerCase(), l[1]]));
+window.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey || ['INPUT', 'SELECT'].includes(e.target.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); src ? stop() : play(sel[0], sel[1]); }
+  else if (k === 'c') play(clip.t0, clip.t1);
+  else if (k === 'r') { const c = cands[cur]; setSels([[c.start, c.end]]); renderInfo(); draw(); }
+  else if (k === 'escape') { setSels([sel]); renderInfo(); draw(); }
+  else if (k === 'arrowdown') { e.preventDefault(); load(cur + 1); }
+  else if (k === 'arrowup') { e.preventDefault(); load(cur - 1); }
+  else if (k === 'backspace' || k === 'delete') { e.preventDefault(); decide(null); }
+  else if (tagMode()) {
+    const t = TAG_SETS[cands[cur].source].find(x => x[0].toLowerCase() === k);
+    if (t) toggleTag(t[1]);
+    else if (k === 'enter') { e.preventDefault(); saveNote(); }
+  }
+  else if (KEYMAP[k]) decide(KEYMAP[k]);
+});
+$('bSel').onclick = () => play(sel[0], sel[1]);
+$('bAll').onclick = () => play(clip.t0, clip.t1);
+$('bReset').onclick = () => { const c = cands[cur]; setSels([[c.start, c.end]]); renderInfo(); draw(); };
+$('bPrev').onclick = () => load(cur - 1);
+$('bNext').onclick = () => load(cur + 1);
+$('bClear').onclick = () => decide(null);
+function modeChanged() {
+  $('recheckOpts').hidden = mode() !== 'recheck';
+  document.activeElement.blur();   // give the keyboard shortcuts back to the page
+  const first = cands.findIndex((c, i) => pending(c, i));
+  if (first >= 0 && (mode() !== 'all')) load(first); else { renderList(); renderInfo(); }
+}
+$('mode').onchange = modeChanged;
+$('source').onchange = sourceChanged;
+for (const id of ['recheckFrom', 'recheckTo', 'recheckGulpsOnly']) $(id).onchange = modeChanged;
+window.addEventListener('resize', draw);
+init();
+</script>
+</body>
+</html>

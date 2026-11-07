@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Read-ahead Test</title>
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 16px; background: #fcfcfb; color: #0b0b0b; }
+  pre { background: #f0efec; padding: 12px; border-radius: 6px; white-space: pre-wrap; }
+  button { font: inherit; padding: 6px 14px; }
+</style>
+<!-- the MAIN-world hook, exactly as the extension injects it, before any media code runs -->
+<script src="../page.js"></script>
+</head>
+<body>
+<h1>Read-ahead end-to-end test</h1>
+<p>Plays results/ahead/005_excerpt.webm through MediaSource (appended in pieces, as YouTube does),
+with page.js copying the appends and ahead.js decoding, analysing and scheduling. The output is
+silent. Two taps record the worklet's input and output; since read-ahead mode adds no delay,
+output / input is the applied gain, sample by sample. A synthetic schedule (80 ms mutes every
+0.5 s) gives many edges to time; the real detections are reported too.</p>
+<button id="go">Start</button>
+<audio id="a"></audio>
+<pre id="out">press Start</pre>
+<script type="module">
+import { AheadController } from '../ahead.js';
+const $ = (id) => document.getElementById(id);
+const out = $('out');
+const say = (s) => { out.textContent += '\n' + s; };
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const SR = 48000;
+
+const TAP = `class Tap extends AudioWorkletProcessor {
+  process(inp) { const x = inp[0];
+    if (x && x.length) { const a = x[0], b = x[1] || x[0], m = new Float32Array(a.length);
+      for (let i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) / 2;
+      this.port.postMessage({ T: currentTime, m }, [m.buffer]); }
+    return true; } }
+registerProcessor('tap', Tap);`;
+
+async function run() {
+  out.textContent = 'running…';
+  const model = await (await fetch('../model.json')).json();
+  const audio = $('a');
+  const ctx = new AudioContext({ sampleRate: SR });
+  await ctx.audioWorklet.addModule('../worklet.js');
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([TAP], { type: 'text/javascript' })));
+  const settings = { enabled: true, fa: '15', atten: 30 };
+  const node = new AudioWorkletNode(ctx, 'gulp-suppressor', {
+    numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit',
+    processorOptions: { model, ...settings, rate: 1 } });
+  const tapIn = new AudioWorkletNode(ctx, 'tap'), tapOut = new AudioWorkletNode(ctx, 'tap');
+  const sink = ctx.createGain(); sink.gain.value = 0; sink.connect(ctx.destination);
+  const src = ctx.createMediaElementSource(audio);
+  src.connect(tapIn); src.connect(node); node.connect(tapOut);
+  tapIn.connect(sink); tapOut.connect(sink);
+  const rec = { in: new Map(), out: new Map() };
+  let recording = false;
+  tapIn.port.onmessage = (e) => { if (recording) rec.in.set(Math.round(e.data.T * SR), e.data.m); };
+  tapOut.port.onmessage = (e) => { if (recording) rec.out.set(Math.round(e.data.T * SR), e.data.m); };
+
+  const logs = [];
+  const ac = new AheadController({ video: audio, ctx, node, model, settings, log: (...a) => logs.push(a.join(' ')) });
+  window.addEventListener('message', (e) => { if (e.source === window && e.data && e.data.__gulp === 1) ac.onPageMessage(e.data); });
+  node.port.onmessage = (e) => { if (e.data.type === 'levels') ac.onLevels(e.data.pairs); };
+
+  // MediaSource, appended in 64 KB pieces as the player would
+  const ms = new MediaSource();
+  audio.src = URL.createObjectURL(ms);
+  await new Promise(r => ms.addEventListener('sourceopen', r, { once: true }));
+  const sb = ms.addSourceBuffer('audio/webm; codecs="opus"');
+  await sleep(50);                          // the 'sb' message makes the controller start a new analyzer
+  ac.analyzer.evict = () => {};            // keep all decoded audio: it is the reference below
+  const bytes = new Uint8Array(await (await fetch('/results/ahead/005_excerpt.webm')).arrayBuffer());
+  const t0 = performance.now();
+  // As after a seek on YouTube: the first minute, then (without abort) from 200 s on.
+  // Clusters are 10 s long; cluster i starts at about 10 i s.
+  const cl = [];
+  for (let i = 0; i + 4 < bytes.length; i++) if (bytes[i] === 0x1f && bytes[i + 1] === 0x43 && bytes[i + 2] === 0xb6 && bytes[i + 3] === 0x75) cl.push(i);
+  const ranges = [[0, cl[6]], [cl[20], bytes.length]];
+  for (const [a, b] of ranges) {
+    for (let o = a; o < b; o += 65536) {
+      sb.appendBuffer(bytes.subarray(o, Math.min(b, o + 65536)));
+      await new Promise(r => sb.addEventListener('updateend', r, { once: true }));
+    }
+  }
+  // wait until everything is decoded and analysed
+  while (ac.stats.decoded < 219 * SR || ac.working) await sleep(100);
+  say(`decoder restarts ${ac.stats.restarts || 0}; appended ${(bytes.length / 1e6).toFixed(1)} MB, decoded and analysed in ${((performance.now() - t0) / 1000).toFixed(1)} s; ` +
+      `segments ${ac.analyzer.segs.map(s => `${s.t0.toFixed(4)}+${(s.n / SR).toFixed(1)}s`).join(', ')}`);
+  const real = ac.analyzer.mutes();
+  say(`real detections (fa 15): ${JSON.stringify(real.map(m => m.map(v => +v.toFixed(3))))}`);
+
+  // Synthetic schedule for timing: 80 ms every 0.5 s.
+  const synth = [];
+  for (let k = 0; k < 720; k++) synth.push([k * 0.5 + 0.2, k * 0.5 + 0.28]);
+  ac.analyzer.mutes = (a, b) => synth.filter(m => m[1] > a && m[0] < b);
+
+  // Scenario: stretches of playback, recording the context time of each change.
+  const marks = [];
+  const mark = (what) => marks.push({ what, T: ctx.currentTime, media: audio.currentTime, rate: audio.playbackRate });
+  async function stretch(at, rate, secs) {
+    audio.playbackRate = rate;
+    audio.currentTime = at;
+    await new Promise(r => audio.addEventListener('seeked', r, { once: true }));
+    if (audio.paused) await audio.play();
+    mark('start');
+    await sleep(secs * 1000);
+    mark('end');
+  }
+  recording = true;
+  await stretch(30, 1, 8);
+  await stretch(205, 1, 8);
+  await stretch(280, 1.5, 10);
+  audio.pause(); mark('pause'); await sleep(1000);
+  await audio.play(); mark('resume'); await sleep(6000); mark('end');
+  audio.pause();
+  recording = false;
+  say(`controller: ${JSON.stringify(ac.status())}`);
+
+  // ---- evaluation ----
+  const keys = [...rec.in.keys()].sort((a, b) => a - b);
+  const base = keys[0], N = keys[keys.length - 1] - base + 128;
+  const xin = new Float32Array(N), xout = new Float32Array(N), have = new Uint8Array(N);
+  for (const k of keys) { const o = rec.out.get(k); if (!o) continue; xin.set(rec.in.get(k), k - base); xout.set(o, k - base); have.fill(1, k - base, k - base + 128); }
+  // reference: the decoded audio of every segment, in the analyzer's media time
+  const refs = ac.analyzer.segs.map(s => { const r = new Float32Array(s.n); for (const c of s.chunks) r.set(c.data, c.start); return { t0: s.t0, r }; });
+  const refAt = (t) => { for (const s of refs) { const i = Math.round((t - s.t0) * SR); if (i >= 0 && i < s.r.length) return s.r[i]; } return 0; };
+  window.__dbg = { xin, xout, base, marks, ac, refs, keys: keys.length };
+
+  // stretches: [start mark, next mark) with their rate; skip 0.3 s after each start
+  const parts = [];
+  for (let i = 0; i < marks.length - 1; i++) {
+    if (marks[i].what === 'start' || marks[i].what === 'resume') parts.push({ a: marks[i], b: marks[i + 1] });
+  }
+  const results = [];
+  let maxPassDiff = 0;
+  for (const p of parts) {
+    const r = p.a.rate, Ta = p.a.T + 0.3, Tb = p.b.T - 0.05;
+    const ia = Math.round(Ta * SR) - base, ib = Math.round(Tb * SR) - base;
+    // truth: media(T) = mA + r (T - Ta). Coarse: 1 ms envelope correlation, +-400 ms around the
+    // element's own reading; fine (rate 1): sample cross-correlation +-2 ms.
+    const env = (f, i0, n) => { const e = new Float64Array(n); for (let j = 0; j < n; j++) { let s = 0; for (let q = 0; q < 48; q++) { const v = f(i0 + j * 48 + q); s += v * v; } e[j] = 10 * Math.log10(s / 48 + 1e-12); } return e; };
+    const nE = Math.floor((ib - ia) / 48);
+    const ein = env(i => xin[ia + (i - ia)] , ia, nE);
+    const mGuess = p.a.media + 0.3 * r;
+    let best = null;
+    for (let L = -400; L <= 400; L++) {
+      const m0 = mGuess + L / 1000;
+      const er = new Float64Array(nE);
+      for (let j = 0; j < nE; j++) { let s = 0; for (let q = 0; q < 48; q += 4) { const v = refAt(m0 + (j * 48 + q) / SR * r); s += v * v; } er[j] = 10 * Math.log10(s / 12 + 1e-12); }
+      let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+      for (let j = 0; j < nE; j++) { sx += ein[j]; sy += er[j]; sxx += ein[j] ** 2; syy += er[j] ** 2; sxy += ein[j] * er[j]; }
+      const c = (sxy - sx * sy / nE) / Math.sqrt((sxx - sx * sx / nE) * (syy - sy * sy / nE));
+      if (!best || c > best.c) best = { c, m0 };
+    }
+    let mA = best.m0, fine = null;
+    if (r === 1) {
+      let bb = null;
+      const n = Math.min(ib - ia, 2 * SR);
+      for (let d = -96; d <= 96; d++) {
+        let sxy = 0, syy = 0, sxx = 0;
+        for (let j = 0; j < n; j++) { const x = xin[ia + j], y = refAt(mA + (j + d) / SR); sxy += x * y; syy += y * y; sxx += x * x; }
+        const c = sxy / Math.sqrt(sxx * syy);
+        if (!bb || c > bb.c) bb = { c, d };
+      }
+      mA += bb.d / SR; fine = bb.c;
+    }
+    const tOf = (m) => Ta + (m - mA) / r;     // context time at which media time m is heard
+    // no delay outside mutes: output equals input wherever the gain is 1
+    const g = (i) => Math.abs(xin[i]) > 1e-3 ? xout[i] / xin[i] : NaN;
+    const starts = [], ends = [], worst = [];
+    for (const [s, e] of synth) {
+      if (s < mA + 0.05 || e > mA + (Tb - Ta) * r - 0.05) continue;
+      const is = Math.round(tOf(s) * SR) - base, ie = Math.round(tOf(e) * SR) - base;
+      // edges: first sample (with signal) where the gain falls below 0.5 / rises back above it
+      const cross = (i0, i1, down) => { for (let i = i0; i < i1; i++) { const v = g(i); if (!Number.isNaN(v) && (down ? v < 0.5 : v > 0.5)) return i; } return null; };
+      const d = cross(is - 480, is + 480, true), u = cross(ie - 240, ie + 720, false);
+      // expected: the 5 ms ramp ends at the mute start (crosses 0.5 at -2.5 ms) and starts at its end (+2.3 ms)
+      if (d !== null) starts.push(((d - is) / SR + 0.0025) * 1000 * r);
+      if (u !== null) ends.push(((u - ie) / SR - 0.00234) * 1000 * r);
+      if (d !== null) worst.push([+(s - mA).toFixed(2), +(((d - is) / SR + 0.0025) * 1000 * r).toFixed(1)]);
+    }
+    for (let i = ia; i < ib; i++) {
+      const m = mA + ((i + base) / SR - Ta) * r;
+      if (synth.some(([s, e]) => m > s - 0.01 && m < e + 0.01)) continue;
+      maxPassDiff = Math.max(maxPassDiff, Math.abs(xout[i] - xin[i]));
+    }
+    const st = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return { n: a.length, median: +s[s.length >> 1].toFixed(2), min: +s[0].toFixed(2), max: +s[s.length - 1].toFixed(2) }; };
+    results.push({ from_media: +p.a.media.toFixed(2), rate: r, env_corr: +best.c.toFixed(3), sample_corr: fine && +fine.toFixed(4),
+                   start_err_ms: st(starts), end_err_ms: st(ends),
+                   within_3ms: +([...starts, ...ends].filter(v => Math.abs(v) <= 3).length / (starts.length + ends.length)).toFixed(3),
+                   off_by_more_than_3ms: worst.filter(([, e]) => Math.abs(e) > 3).map(([t, e]) => `${t}s after start: ${e} ms`) });
+  }
+  const res = { stretches: results, max_abs_diff_outside_mutes: maxPassDiff, calibration_offset_ms: ac.status().offsetMs,
+                logs: logs.slice(0, 8) };
+  say(JSON.stringify(res, null, 1));
+  window.__result = res;
+}
+$('go').onclick = () => run().catch(e => { say('FAILED: ' + e + '\n' + e.stack); window.__result = { error: String(e) }; });
+</script>
+</body>
+</html>

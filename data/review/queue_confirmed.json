@@ -1,0 +1,1381 @@
+{
+ "candidates": [
+  {
+   "lec": "002",
+   "start": 253.9,
+   "end": 254.35,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_002_253.900",
+   "rank": 1
+  },
+  {
+   "lec": "002",
+   "start": 357.5,
+   "end": 357.95,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_002_357.500",
+   "rank": 2
+  },
+  {
+   "lec": "002",
+   "start": 563.061,
+   "end": 563.239,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_002_563.061",
+   "rank": 3
+  },
+  {
+   "lec": "002",
+   "start": 945.25,
+   "end": 945.7,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_002_945.250",
+   "rank": 4
+  },
+  {
+   "lec": "003",
+   "start": 62.25,
+   "end": 62.7,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_003_62.250",
+   "rank": 5
+  },
+  {
+   "lec": "003",
+   "start": 281.6,
+   "end": 282.05,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_003_281.600",
+   "rank": 6
+  },
+  {
+   "lec": "004",
+   "start": 243.501,
+   "end": 243.89,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_004_243.501",
+   "rank": 7
+  },
+  {
+   "lec": "004",
+   "start": 574.55,
+   "end": 574.95,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_004_574.550",
+   "rank": 8
+  },
+  {
+   "lec": "004",
+   "start": 701.6,
+   "end": 702.0,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_004_701.600",
+   "rank": 9
+  },
+  {
+   "lec": "004",
+   "start": 839.55,
+   "end": 839.95,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_004_839.550",
+   "rank": 10
+  },
+  {
+   "lec": "005",
+   "start": 185.0,
+   "end": 185.45,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_005_185.000",
+   "rank": 11
+  },
+  {
+   "lec": "005",
+   "start": 284.614,
+   "end": 284.796,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_005_284.614",
+   "rank": 12
+  },
+  {
+   "lec": "005",
+   "start": 682.5,
+   "end": 682.85,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_005_682.500",
+   "rank": 13
+  },
+  {
+   "lec": "005",
+   "start": 793.968,
+   "end": 794.153,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_005_793.968",
+   "rank": 14
+  },
+  {
+   "lec": "005",
+   "start": 869.25,
+   "end": 869.75,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_005_869.250",
+   "rank": 15
+  },
+  {
+   "lec": "005",
+   "start": 1125.6,
+   "end": 1126.05,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_005_1125.600",
+   "rank": 16
+  },
+  {
+   "lec": "006",
+   "start": 200.329,
+   "end": 200.615,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_006_200.329",
+   "rank": 17
+  },
+  {
+   "lec": "006",
+   "start": 328.5,
+   "end": 329.05,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_006_328.500",
+   "rank": 18
+  },
+  {
+   "lec": "006",
+   "start": 482.35,
+   "end": 482.85,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_006_482.350",
+   "rank": 19
+  },
+  {
+   "lec": "006",
+   "start": 792.689,
+   "end": 792.997,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_006_792.689",
+   "rank": 20
+  },
+  {
+   "lec": "006",
+   "start": 1056.15,
+   "end": 1056.55,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_006_1056.150",
+   "rank": 21
+  },
+  {
+   "lec": "006",
+   "start": 1187.45,
+   "end": 1188.0,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_006_1187.450",
+   "rank": 22
+  },
+  {
+   "lec": "006",
+   "start": 1325.65,
+   "end": 1326.15,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_006_1325.650",
+   "rank": 23
+  },
+  {
+   "lec": "006",
+   "start": 1479.71,
+   "end": 1480.06,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_006_1479.710",
+   "rank": 24
+  },
+  {
+   "lec": "007",
+   "start": 114.225,
+   "end": 114.468,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_007_114.225",
+   "rank": 25
+  },
+  {
+   "lec": "007",
+   "start": 114.242,
+   "end": 114.44,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_007_114.242",
+   "rank": 26
+  },
+  {
+   "lec": "007",
+   "start": 226.648,
+   "end": 226.907,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_007_226.648",
+   "rank": 27
+  },
+  {
+   "lec": "007",
+   "start": 324.221,
+   "end": 324.531,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_007_324.221",
+   "rank": 28
+  },
+  {
+   "lec": "007",
+   "start": 470.877,
+   "end": 471.191,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_007_470.877",
+   "rank": 29
+  },
+  {
+   "lec": "007",
+   "start": 604.094,
+   "end": 604.333,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_007_604.094",
+   "rank": 30
+  },
+  {
+   "lec": "007",
+   "start": 733.263,
+   "end": 733.709,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_007_733.263",
+   "rank": 31
+  },
+  {
+   "lec": "008",
+   "start": 161.891,
+   "end": 162.218,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_008_161.891",
+   "rank": 32
+  },
+  {
+   "lec": "008",
+   "start": 309.439,
+   "end": 309.723,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_008_309.439",
+   "rank": 33
+  },
+  {
+   "lec": "008",
+   "start": 442.57,
+   "end": 442.942,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_008_442.570",
+   "rank": 34
+  },
+  {
+   "lec": "008",
+   "start": 610.161,
+   "end": 610.516,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_008_610.161",
+   "rank": 35
+  },
+  {
+   "lec": "008",
+   "start": 788.179,
+   "end": 788.674,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_008_788.179",
+   "rank": 36
+  },
+  {
+   "lec": "008",
+   "start": 788.215,
+   "end": 788.616,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_008_788.215",
+   "rank": 37
+  },
+  {
+   "lec": "009",
+   "start": 127.95,
+   "end": 128.4,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_009_127.950",
+   "rank": 38
+  },
+  {
+   "lec": "009",
+   "start": 413.45,
+   "end": 413.8,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_009_413.450",
+   "rank": 39
+  },
+  {
+   "lec": "009",
+   "start": 899.95,
+   "end": 900.4,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_009_899.950",
+   "rank": 40
+  },
+  {
+   "lec": "010",
+   "start": 155.6,
+   "end": 156.05,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_010_155.600",
+   "rank": 41
+  },
+  {
+   "lec": "010",
+   "start": 240.25,
+   "end": 240.7,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_010_240.250",
+   "rank": 42
+  },
+  {
+   "lec": "010",
+   "start": 495.9,
+   "end": 496.35,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_010_495.900",
+   "rank": 43
+  },
+  {
+   "lec": "010",
+   "start": 631.06,
+   "end": 631.41,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_010_631.060",
+   "rank": 44
+  },
+  {
+   "lec": "010",
+   "start": 913.85,
+   "end": 914.25,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_010_913.850",
+   "rank": 45
+  },
+  {
+   "lec": "010",
+   "start": 1010.25,
+   "end": 1010.65,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_010_1010.250",
+   "rank": 46
+  },
+  {
+   "lec": "010",
+   "start": 1289.15,
+   "end": 1289.6,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_010_1289.150",
+   "rank": 47
+  },
+  {
+   "lec": "010",
+   "start": 1507.8,
+   "end": 1508.105,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_010_1507.800",
+   "rank": 48
+  },
+  {
+   "lec": "012",
+   "start": 714.85,
+   "end": 715.35,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_012_714.850",
+   "rank": 49
+  },
+  {
+   "lec": "012",
+   "start": 809.74,
+   "end": 810.075,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_012_809.740",
+   "rank": 50
+  },
+  {
+   "lec": "012",
+   "start": 1123.4,
+   "end": 1123.8,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_012_1123.400",
+   "rank": 51
+  },
+  {
+   "lec": "013",
+   "start": 409.35,
+   "end": 409.75,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_409.350",
+   "rank": 52
+  },
+  {
+   "lec": "013",
+   "start": 520.541,
+   "end": 520.783,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_520.541",
+   "rank": 53
+  },
+  {
+   "lec": "013",
+   "start": 555.15,
+   "end": 555.55,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_555.150",
+   "rank": 54
+  },
+  {
+   "lec": "013",
+   "start": 616.57,
+   "end": 616.92,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_616.570",
+   "rank": 55
+  },
+  {
+   "lec": "013",
+   "start": 684.4,
+   "end": 684.85,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_684.400",
+   "rank": 56
+  },
+  {
+   "lec": "013",
+   "start": 716.824,
+   "end": 717.013,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_716.824",
+   "rank": 57
+  },
+  {
+   "lec": "013",
+   "start": 726.58,
+   "end": 726.93,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_726.580",
+   "rank": 58
+  },
+  {
+   "lec": "013",
+   "start": 932.285,
+   "end": 932.514,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_932.285",
+   "rank": 59
+  },
+  {
+   "lec": "013",
+   "start": 999.51,
+   "end": 999.86,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_999.510",
+   "rank": 60
+  },
+  {
+   "lec": "013",
+   "start": 1089.45,
+   "end": 1089.85,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_013_1089.450",
+   "rank": 61
+  },
+  {
+   "lec": "013",
+   "start": 1156.8,
+   "end": 1157.105,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_1156.800",
+   "rank": 62
+  },
+  {
+   "lec": "013",
+   "start": 1227.9,
+   "end": 1228.3,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_1227.900",
+   "rank": 63
+  },
+  {
+   "lec": "013",
+   "start": 1287.65,
+   "end": 1288.05,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_1287.650",
+   "rank": 64
+  },
+  {
+   "lec": "013",
+   "start": 1603.7,
+   "end": 1604.15,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_1603.700",
+   "rank": 65
+  },
+  {
+   "lec": "013",
+   "start": 1665.17,
+   "end": 1665.475,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_1665.170",
+   "rank": 66
+  },
+  {
+   "lec": "013",
+   "start": 1909.4,
+   "end": 1909.8,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_1909.400",
+   "rank": 67
+  },
+  {
+   "lec": "013",
+   "start": 2010.25,
+   "end": 2010.7,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_2010.250",
+   "rank": 68
+  },
+  {
+   "lec": "013",
+   "start": 2078.304,
+   "end": 2078.497,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_2078.304",
+   "rank": 69
+  },
+  {
+   "lec": "013",
+   "start": 2217.7,
+   "end": 2218.2,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_2217.700",
+   "rank": 70
+  },
+  {
+   "lec": "013",
+   "start": 2313.2,
+   "end": 2313.65,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_013_2313.200",
+   "rank": 71
+  },
+  {
+   "lec": "013",
+   "start": 2639.35,
+   "end": 2639.8,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_2639.350",
+   "rank": 72
+  },
+  {
+   "lec": "013",
+   "start": 2693.05,
+   "end": 2693.5,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_2693.050",
+   "rank": 73
+  },
+  {
+   "lec": "013",
+   "start": 3109.3,
+   "end": 3109.75,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_3109.300",
+   "rank": 74
+  },
+  {
+   "lec": "013",
+   "start": 3543.93,
+   "end": 3544.28,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_3543.930",
+   "rank": 75
+  },
+  {
+   "lec": "013",
+   "start": 3609.9,
+   "end": 3610.35,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_3609.900",
+   "rank": 76
+  },
+  {
+   "lec": "013",
+   "start": 3663.728,
+   "end": 3663.874,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_3663.728",
+   "rank": 77
+  },
+  {
+   "lec": "013",
+   "start": 3820.36,
+   "end": 3820.665,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_013_3820.360",
+   "rank": 78
+  },
+  {
+   "lec": "014",
+   "start": 297.446,
+   "end": 297.709,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_014_297.446",
+   "rank": 79
+  },
+  {
+   "lec": "014",
+   "start": 688.34,
+   "end": 688.571,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_014_688.340",
+   "rank": 80
+  },
+  {
+   "lec": "014",
+   "start": 1079.059,
+   "end": 1079.231,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_014_1079.059",
+   "rank": 81
+  },
+  {
+   "lec": "015",
+   "start": 147.75,
+   "end": 148.25,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_015_147.750",
+   "rank": 82
+  },
+  {
+   "lec": "015",
+   "start": 210.9,
+   "end": 211.35,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_015_210.900",
+   "rank": 83
+  },
+  {
+   "lec": "015",
+   "start": 919.75,
+   "end": 920.2,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_015_919.750",
+   "rank": 84
+  },
+  {
+   "lec": "017",
+   "start": 654.86,
+   "end": 655.21,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_017_654.860",
+   "rank": 85
+  },
+  {
+   "lec": "017",
+   "start": 1137.0,
+   "end": 1137.45,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_017_1137.000",
+   "rank": 86
+  },
+  {
+   "lec": "018",
+   "start": 193.2,
+   "end": 193.6,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_018_193.200",
+   "rank": 87
+  },
+  {
+   "lec": "018",
+   "start": 500.35,
+   "end": 500.8,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_018_500.350",
+   "rank": 88
+  },
+  {
+   "lec": "018",
+   "start": 1358.0,
+   "end": 1358.45,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_018_1358.000",
+   "rank": 89
+  },
+  {
+   "lec": "020",
+   "start": 194.74,
+   "end": 195.09,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_020_194.740",
+   "rank": 90
+  },
+  {
+   "lec": "020",
+   "start": 437.4,
+   "end": 437.75,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_020_437.400",
+   "rank": 91
+  },
+  {
+   "lec": "020",
+   "start": 708.3,
+   "end": 708.7,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_020_708.300",
+   "rank": 92
+  },
+  {
+   "lec": "020",
+   "start": 853.973,
+   "end": 854.226,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_020_853.973",
+   "rank": 93
+  },
+  {
+   "lec": "021",
+   "start": 132.75,
+   "end": 133.15,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_021_132.750",
+   "rank": 94
+  },
+  {
+   "lec": "021",
+   "start": 292.98,
+   "end": 293.33,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_021_292.980",
+   "rank": 95
+  },
+  {
+   "lec": "021",
+   "start": 415.95,
+   "end": 416.4,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_021_415.950",
+   "rank": 96
+  },
+  {
+   "lec": "021",
+   "start": 523.2,
+   "end": 523.65,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_021_523.200",
+   "rank": 97
+  },
+  {
+   "lec": "021",
+   "start": 939.192,
+   "end": 939.422,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_021_939.192",
+   "rank": 98
+  },
+  {
+   "lec": "021",
+   "start": 1008.78,
+   "end": 1009.13,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_021_1008.780",
+   "rank": 99
+  },
+  {
+   "lec": "021",
+   "start": 1364.15,
+   "end": 1364.6,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_021_1364.150",
+   "rank": 100
+  },
+  {
+   "lec": "021",
+   "start": 1723.0,
+   "end": 1723.45,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_021_1723.000",
+   "rank": 101
+  },
+  {
+   "lec": "022",
+   "start": 383.479,
+   "end": 383.632,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_022_383.479",
+   "rank": 102
+  },
+  {
+   "lec": "023",
+   "start": 1650.352,
+   "end": 1650.523,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_023_1650.352",
+   "rank": 103
+  },
+  {
+   "lec": "024",
+   "start": 792.0,
+   "end": 792.55,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_024_792.000",
+   "rank": 104
+  },
+  {
+   "lec": "025",
+   "start": 880.8,
+   "end": 881.25,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_025_880.800",
+   "rank": 105
+  },
+  {
+   "lec": "025",
+   "start": 1417.6,
+   "end": 1417.9,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_025_1417.600",
+   "rank": 106
+  },
+  {
+   "lec": "025",
+   "start": 1545.101,
+   "end": 1545.431,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_025_1545.101",
+   "rank": 107
+  },
+  {
+   "lec": "025",
+   "start": 1763.94,
+   "end": 1764.29,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_025_1763.940",
+   "rank": 108
+  },
+  {
+   "lec": "025",
+   "start": 1916.997,
+   "end": 1917.22,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_025_1916.997",
+   "rank": 109
+  },
+  {
+   "lec": "026",
+   "start": 96.897,
+   "end": 97.133,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_026_96.897",
+   "rank": 110
+  },
+  {
+   "lec": "026",
+   "start": 227.48,
+   "end": 227.745,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_026_227.480",
+   "rank": 111
+  },
+  {
+   "lec": "026",
+   "start": 368.29,
+   "end": 368.735,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_026_368.290",
+   "rank": 112
+  },
+  {
+   "lec": "026",
+   "start": 606.11,
+   "end": 606.46,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_026_606.110",
+   "rank": 113
+  },
+  {
+   "lec": "027",
+   "start": 839.046,
+   "end": 839.355,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_027_839.046",
+   "rank": 114
+  },
+  {
+   "lec": "027",
+   "start": 1284.835,
+   "end": 1285.035,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_027_1284.835",
+   "rank": 115
+  },
+  {
+   "lec": "028",
+   "start": 476.6,
+   "end": 477.05,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_028_476.600",
+   "rank": 116
+  },
+  {
+   "lec": "028",
+   "start": 705.72,
+   "end": 706.07,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_028_705.720",
+   "rank": 117
+  },
+  {
+   "lec": "028",
+   "start": 1032.45,
+   "end": 1032.8,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_028_1032.450",
+   "rank": 118
+  },
+  {
+   "lec": "028",
+   "start": 1147.065,
+   "end": 1147.222,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_028_1147.065",
+   "rank": 119
+  },
+  {
+   "lec": "029",
+   "start": 268.28,
+   "end": 268.585,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_029_268.280",
+   "rank": 120
+  },
+  {
+   "lec": "030",
+   "start": 865.66,
+   "end": 866.01,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_030_865.660",
+   "rank": 121
+  },
+  {
+   "lec": "030",
+   "start": 1367.35,
+   "end": 1367.8,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_030_1367.350",
+   "rank": 122
+  },
+  {
+   "lec": "030",
+   "start": 1625.632,
+   "end": 1625.869,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_030_1625.632",
+   "rank": 123
+  },
+  {
+   "lec": "031",
+   "start": 575.981,
+   "end": 576.159,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_031_575.981",
+   "rank": 124
+  },
+  {
+   "lec": "031",
+   "start": 722.64,
+   "end": 722.99,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_031_722.640",
+   "rank": 125
+  },
+  {
+   "lec": "031",
+   "start": 1192.18,
+   "end": 1192.53,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_031_1192.180",
+   "rank": 126
+  },
+  {
+   "lec": "031",
+   "start": 1261.493,
+   "end": 1261.717,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_031_1261.493",
+   "rank": 127
+  },
+  {
+   "lec": "032",
+   "start": 652.19,
+   "end": 652.54,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_032_652.190",
+   "rank": 128
+  },
+  {
+   "lec": "032",
+   "start": 816.65,
+   "end": 817.05,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_032_816.650",
+   "rank": 129
+  },
+  {
+   "lec": "033",
+   "start": 206.34,
+   "end": 206.69,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_033_206.340",
+   "rank": 130
+  },
+  {
+   "lec": "033",
+   "start": 559.31,
+   "end": 559.66,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_033_559.310",
+   "rank": 131
+  },
+  {
+   "lec": "033",
+   "start": 996.66,
+   "end": 996.931,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_033_996.660",
+   "rank": 132
+  },
+  {
+   "lec": "034",
+   "start": 54.1,
+   "end": 54.5,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_034_54.100",
+   "rank": 133
+  },
+  {
+   "lec": "034",
+   "start": 140.5,
+   "end": 140.95,
+   "label": "gulp_high",
+   "score": 0.0,
+   "id": "conf_034_140.500",
+   "rank": 134
+  },
+  {
+   "lec": "034",
+   "start": 547.47,
+   "end": 547.915,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_034_547.470",
+   "rank": 135
+  },
+  {
+   "lec": "034",
+   "start": 681.9,
+   "end": 682.45,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_034_681.900",
+   "rank": 136
+  },
+  {
+   "lec": "034",
+   "start": 775.1,
+   "end": 775.6,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_034_775.100",
+   "rank": 137
+  },
+  {
+   "lec": "035",
+   "start": 293.223,
+   "end": 293.395,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_035_293.223",
+   "rank": 138
+  },
+  {
+   "lec": "035",
+   "start": 431.99,
+   "end": 432.295,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_431.990",
+   "rank": 139
+  },
+  {
+   "lec": "035",
+   "start": 456.3,
+   "end": 456.605,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_456.300",
+   "rank": 140
+  },
+  {
+   "lec": "035",
+   "start": 535.5,
+   "end": 535.85,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_535.500",
+   "rank": 141
+  },
+  {
+   "lec": "035",
+   "start": 661.987,
+   "end": 662.287,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_035_661.987",
+   "rank": 142
+  },
+  {
+   "lec": "035",
+   "start": 744.23,
+   "end": 744.535,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_744.230",
+   "rank": 143
+  },
+  {
+   "lec": "035",
+   "start": 778.45,
+   "end": 778.85,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_778.450",
+   "rank": 144
+  },
+  {
+   "lec": "035",
+   "start": 833.45,
+   "end": 833.9,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_833.450",
+   "rank": 145
+  },
+  {
+   "lec": "035",
+   "start": 847.04,
+   "end": 847.39,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_847.040",
+   "rank": 146
+  },
+  {
+   "lec": "035",
+   "start": 996.65,
+   "end": 997.1,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_996.650",
+   "rank": 147
+  },
+  {
+   "lec": "035",
+   "start": 1288.5,
+   "end": 1288.85,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_1288.500",
+   "rank": 148
+  },
+  {
+   "lec": "035",
+   "start": 1358.02,
+   "end": 1358.37,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_1358.020",
+   "rank": 149
+  },
+  {
+   "lec": "035",
+   "start": 1499.7,
+   "end": 1500.05,
+   "label": "gulp_low",
+   "score": 0.0,
+   "id": "conf_035_1499.700",
+   "rank": 150
+  },
+  {
+   "lec": "035",
+   "start": 1672.95,
+   "end": 1673.4,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_1672.950",
+   "rank": 151
+  },
+  {
+   "lec": "035",
+   "start": 1793.9,
+   "end": 1794.25,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_1793.900",
+   "rank": 152
+  },
+  {
+   "lec": "035",
+   "start": 2059.86,
+   "end": 2060.21,
+   "label": "gulp",
+   "score": 0.0,
+   "id": "conf_035_2059.860",
+   "rank": 153
+  }
+ ]
+}
