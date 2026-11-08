@@ -10,6 +10,17 @@
 </style>
 <!-- the MAIN-world hook, exactly as the extension injects it, before any media code runs -->
 <script src="../page.js"></script>
+<script>
+// page.js forwards audio only for Buders videos: make this page look like a Buders watch page
+// for the moment page.js checks (DOMContentLoaded), then restore the real URL.
+window.ytInitialPlayerResponse = { videoDetails: { videoId: 'e2e', channelId: 'UClKBd-4xFVodFmK3bZfJAAQ' } };
+document.addEventListener('DOMContentLoaded', () => {
+  const orig = location.href;
+  history.replaceState(null, '', '/watch?v=e2e');
+  document.dispatchEvent(new Event('yt-navigate-finish'));
+  history.replaceState(null, '', orig);
+});
+</script>
 </head>
 <body>
 <h1>Read-ahead end-to-end test</h1>

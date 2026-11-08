@@ -192,6 +192,12 @@ export class AheadController {
     if (this.on) this._setOn(false);
   }
 
+  // Not a Buders video: drop the stream and the analysis; page.js sends nothing until a Buders
+  // video plays again (its 'sb' message starts a new stream).
+  setActive(on) {
+    if (!on) this._newVideo();
+  }
+
   setSettings(s) {
     this.settings = { ...s };
     this.analyzer.setFa(s.fa);

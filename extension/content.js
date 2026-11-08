@@ -41,6 +41,7 @@
       if (allowed() !== was) log(allowed() ? 'Buders video: active' : 'not a Buders video: sound passes through untouched');
       if (allowed() && !current) scan();
       apply();
+      passThrough();
       return;
     }
     if (current && current.ahead) current.ahead.onPageMessage(d);
@@ -85,6 +86,10 @@
     const node = ctx.createScriptProcessor(512, 2, 2);
     node.onaudioprocess = (e) => {
       const ib = e.inputBuffer, ob = e.outputBuffer;
+      if (current && current.pass) {                     // other channel: straight through
+        for (let c = 0; c < 2; c++) ob.getChannelData(c).set(ib.getChannelData(Math.min(c, ib.numberOfChannels - 1)));
+        return;
+      }
       holder.engine.process([ib.getChannelData(0), ib.getChannelData(1)], [ob.getChannelData(0), ob.getChannelData(1)]);
     };
     return node;
@@ -120,7 +125,7 @@
     const src = ctx.createMediaElementSource(video);
     src.connect(node);
     node.connect(ctx.destination);
-    current = { ctx, node, mode, holder, video, ahead, stats: { nMutes: 0, late: 0 } };
+    current = { ctx, node, mode, holder, video, ahead, pass: false, stats: { nMutes: 0, late: 0 } };
     if (node.port) {
       node.port.onmessage = (e) => {
         if (e.data.type === 'stats') current.stats = { nMutes: e.data.nMutes, late: e.data.late };
@@ -158,6 +163,20 @@
     });
     if (!node.port) holder.engine.setRate(video.playbackRate);
     log(`active (${mode}), operating point ${settings.fa} false alarms/h, attenuation ${settings.atten} dB`);
+  }
+
+  // Other channel: the worklet copies input to output and the read-ahead stops, so the page costs
+  // what it would without the extension. Back on Buders the live engine restarts from scratch.
+  function passThrough() {
+    if (!current) return;
+    const pass = !allowed();
+    if (current.pass === pass) return;
+    current.pass = pass;
+    if (current.node.port) {
+      current.node.port.postMessage({ type: 'pass', on: pass });
+      if (!pass) current.node.port.postMessage({ type: 'reset', ...eff(), newVideo: true, rate: current.video.playbackRate });
+    }
+    if (current.ahead) current.ahead.setActive(!pass);
   }
 
   function apply() {

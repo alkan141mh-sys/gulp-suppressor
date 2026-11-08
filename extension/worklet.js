@@ -2,7 +2,8 @@
 // (the content script creates the AudioContext at 48 kHz, so the model's sample rate always
 // holds; Chrome resamples to the output device).
 //
-// Two modes:
+// Modes:
+//   pass   not a Buders video: input copied to output, nothing else runs (no delay, no analysis).
 //   live   engine.js detects in the stream itself; the audio is delayed by DELAY_MS so a
 //          decision can still mute the gulp it was made on.
 //   ahead  the content script has already found the gulps in the audio YouTube buffered
@@ -20,6 +21,7 @@ class GulpProcessor extends AudioWorkletProcessor {
     this.make(o);
     if (o.rate) this.engine.setRate(o.rate);
     this.ahead = false;
+    this.pass = false;
     this.ag = new AheadGain(sampleRate, o.model.dsp.RAMP_MS, o.atten);
     this.ag.bypass = !o.enabled;
     this.levels = new Float64Array(64); this.nl = 0;   // [T, power] pairs for the Calibrator
@@ -40,6 +42,8 @@ class GulpProcessor extends AudioWorkletProcessor {
         this.make({ fa: m.fa, atten: m.atten, enabled: m.enabled,
                     carry: m.newVideo ? null : this.engine.carryState() });
         if (m.rate) this.engine.setRate(m.rate);
+      } else if (m.type === 'pass') {
+        this.pass = !!m.on;
       } else if (m.type === 'ahead') {
         this.ahead = !!m.on;
         this.ag.gain = 1;
@@ -72,6 +76,10 @@ class GulpProcessor extends AudioWorkletProcessor {
     if (this.zero.length !== n) this.zero = new Float32Array(n);
     const ins = inp && inp.length ? (inp.length === 1 ? [inp[0], inp[0]] : inp) : [this.zero, this.zero];
     const outs = out.length === 1 ? [out[0], new Float32Array(n)] : out;
+    if (this.pass) {
+      for (let c = 0; c < outs.length; c++) outs[c].set(ins[Math.min(c, ins.length - 1)]);
+      return true;
+    }
     if (this.ahead) {
       const p = this.ag.process(ins, outs, currentTime);
       this.levels[this.nl++] = currentTime; this.levels[this.nl++] = p;

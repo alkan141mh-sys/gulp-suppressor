@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gulp Suppressor",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Mutes the lecturer's swallowing sounds in Buders YouTube lectures, on this computer only.",
   "permissions": ["storage"],
   "action": {
