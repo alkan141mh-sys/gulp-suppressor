@@ -19,7 +19,8 @@
   #saved { margin-left: auto; color: var(--muted); font-size: 13px; }
   canvas { display: block; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
   #ov { height: 70px; cursor: pointer; margin-bottom: 8px; }
-  #main { height: 300px; cursor: crosshair; }
+  #main { height: 460px; cursor: crosshair; }
+  input[type=range] { width: 110px; vertical-align: middle; accent-color: var(--accent); }
   .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
   button { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
            padding: 6px 10px; font: inherit; cursor: pointer; }
@@ -57,6 +58,8 @@
     <span class="stat">Pencere:</span>
     <span id="zooms"></span>
     <button id="bDb" class="on" title="Sessiz sesleri görünür yapar">dB görünüm</button>
+    <button id="bSpec" class="on" title="Zaman × frekans, renk = şiddet (dB)">Spektrogram</button>
+    <span class="stat" title="Spektrogramda ne kadar kısık ses görünsün">Kontrast <input type="range" id="cLo" min="0" max="200" value="60"></span>
     <span class="stat" style="margin-left:auto">Seçili etiketi değiştir:</span>
     <span class="lab"><span class="kbd">1</span>az</span>
     <span class="lab"><span class="kbd">2</span>gulp</span>
@@ -72,6 +75,7 @@
       <li><b>Çift tık</b> ya da <span class="kbd">Enter</span>: seçili etiketi çal · <span class="kbd">P</span>: 1 s önce ve sonrasıyla çal.</li>
       <li><b>Sağ tık</b> ya da <span class="kbd">Del</span>: etiketi sil.</li>
       <li><span class="kbd">←</span> <span class="kbd">→</span>: 2 s geri / ileri (Shift ile 10 s) · <b>Tekerlek</b>: kaydır, Ctrl+tekerlek: yakınlaştır · <span class="kbd">+</span> <span class="kbd">−</span>: pencere.</li>
+      <li><b>Spektrogram</b>: yatay zaman, dikey frekans (0–8 kHz), renk o frekansın şiddeti: mor kısık, sarı yüksek. Kontrast ile kısık sesleri öne çıkar.</li>
       <li>Üstteki şerit dört dersin tamamı; altındaki yeşil çizgi dinlediğin kısımlar. Sayfa açılınca kaldığın yerden devam eder.</li>
       <li>Her değişiklik kendiliğinden kaydedilir. Bu sayfada hiçbir dedektör bilgisi yok.</li>
     </ul>
@@ -93,6 +97,9 @@ let L = [], total = 0, peakMs = 5, peakScale = 2.5;
 let labels = {}, listened = {};
 let pos = 0;                 // playhead, global seconds
 let view0 = 0, W = 10;       // main view: [view0, view0 + W)
+let spec = null, specOn = true, specLo = 60;
+const specCache = new Map();      // 'lec:c' -> Uint8Array (frames x bins) | 'loading'
+let specImg = null, specKey = '', specLoaded = 0;
 let dbView = true, floorDb = 36;   // floorDb: room noise, the 1st percentile of the 5 ms peaks
 let sel = null;              // { lec, i }
 let curLec = null, playing = false, stopAt = null, lastT = null;
@@ -257,6 +264,67 @@ function drawWave(g, w, h, t0, t1, top, hh, color) {
     if (y > 0.3) g.fillRect(x, mid - y, 1, 2 * y);
   }
 }
+// magma colour map (purple -> yellow), 256 entries
+const MAGMA = (() => {
+  const A = [[0, 0, 0, 4], [0.13, 28, 16, 68], [0.25, 79, 18, 123], [0.38, 129, 37, 129], [0.5, 181, 54, 122],
+             [0.63, 229, 80, 100], [0.75, 251, 135, 97], [0.88, 254, 194, 135], [1, 252, 253, 191]];
+  const lut = new Uint8Array(256 * 3);
+  for (let i = 0; i < 256; i++) {
+    const v = i / 255;
+    let k = 0; while (k < A.length - 2 && v > A[k + 1][0]) k++;
+    const [x0, ...c0] = A[k], [x1, ...c1] = A[k + 1], f = (v - x0) / (x1 - x0);
+    for (let j = 0; j < 3; j++) lut[3 * i + j] = Math.round(c0[j] + f * (c1[j] - c0[j]));
+  }
+  return lut;
+})();
+function chunk(lec, c) {
+  const key = lec + ':' + c, v = specCache.get(key);
+  if (v) return v === 'loading' ? null : v;
+  specCache.set(key, 'loading');
+  fetch(`/api/test/spec?lec=${lec}&c=${c}`).then(r => r.arrayBuffer()).then(b => {
+    specCache.set(key, new Uint8Array(b));
+    if (specCache.size > 80) {                       // keep the cache bounded
+      for (const k of specCache.keys()) { if (specCache.size <= 60) break; if (k !== key) specCache.delete(k); }
+    }
+    specLoaded++; draw();
+  }).catch(() => specCache.delete(key));
+  return null;
+}
+function specImage(cols, t0, t1) {
+  // One image column per canvas pixel; each takes the loudest frame it covers, per frequency bin.
+  const key = `${t0.toFixed(4)},${t1},${cols},${specLoaded},${specLo}`;
+  if (key === specKey) return specImg;
+  const nb = spec.bins, hop = spec.hop_ms / 1000, per = spec.chunk_s * 1000 / spec.hop_ms;
+  const cv = specImg && specImg.width === cols ? specImg : document.createElement('canvas');
+  cv.width = cols; cv.height = nb;
+  const g = cv.getContext('2d'), im = g.createImageData(cols, nb), d = im.data;
+  const col = new Uint8Array(nb), scale = 255 / Math.max(1, 255 - specLo);
+  for (let x = 0; x < cols; x++) {
+    const a = t0 + (t1 - t0) * x / cols, b = t0 + (t1 - t0) * (x + 1) / cols;
+    col.fill(0);
+    let any = false;
+    for (const l of L) {
+      if (b <= l.off || a >= l.off + l.dur) continue;
+      const f0 = Math.max(0, Math.round((a - l.off) / hop)), f1 = Math.max(f0 + 1, Math.round((b - l.off) / hop));
+      for (let f = f0; f < f1; f++) {
+        const c = Math.floor(f / per), arr = chunk(l.lec, c);
+        if (!arr) continue;
+        any = true;
+        const o = (f - c * per) * nb;
+        for (let k = 0; k < nb; k++) if (arr[o + k] > col[k]) col[k] = arr[o + k];
+      }
+    }
+    for (let k = 0; k < nb; k++) {
+      const v = any ? Math.min(255, Math.max(0, (col[k] - specLo) * scale)) | 0 : 0;
+      const p = 4 * ((nb - 1 - k) * cols + x);        // low frequencies at the bottom
+      d[p] = MAGMA[3 * v]; d[p + 1] = MAGMA[3 * v + 1]; d[p + 2] = MAGMA[3 * v + 2]; d[p + 3] = any ? 255 : 0;
+    }
+  }
+  g.putImageData(im, 0, 0);
+  specImg = cv; specKey = key;
+  return cv;
+}
+
 function drawOverview() {
   const c = $('ov'), g = fit(c), w = c.width, h = c.height, k = dpr();
   g.clearRect(0, 0, w, h);
@@ -297,7 +365,9 @@ function drawMain() {
   const c = $('main'), g = fit(c), w = c.width, h = c.height, k = dpr();
   g.clearRect(0, 0, w, h);
   const X = (T) => (T - view0) / W * w;
-  const top = 22 * k, hh = h - 30 * k;
+  const top = 22 * k, full = h - 30 * k;
+  const hh = specOn ? Math.round(full * 0.34) : full;          // waveform band
+  const sTop = top + hh + 6 * k, sH = top + full - sTop;       // spectrogram band
   // unheard parts darker
   g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, 0, w, h);
   g.fillStyle = '#1d2027';
@@ -314,10 +384,20 @@ function drawMain() {
     const col = lab === 'unsure' ? '154,143,214' : '255,180,84';
     g.fillStyle = `rgba(${col},${isSel ? 0.35 : 0.18})`; g.fillRect(x0, top, x1 - x0, hh);
     g.fillStyle = `rgb(${col})`;
-    g.fillRect(x0, top, (isSel ? 2 : 1) * k, hh); g.fillRect(x1 - (isSel ? 2 : 1) * k, top, (isSel ? 2 : 1) * k, hh);
+    g.fillRect(x0, top, (isSel ? 2 : 1) * k, full); g.fillRect(x1 - (isSel ? 2 : 1) * k, top, (isSel ? 2 : 1) * k, full);
     g.fillText(SHORT[lab], x0 + 3 * k, top + 3 * k);
   });
   drawWave(g, w, h, view0, view0 + W, top, hh, '#6f8fbf');
+  if (specOn && spec) {
+    g.imageSmoothingEnabled = true;
+    g.drawImage(specImage(Math.floor(w), view0, view0 + W), 0, sTop, w, sH);
+    g.font = `${10 * k}px system-ui`; g.fillStyle = 'rgba(231,233,238,0.75)'; g.textBaseline = 'middle';
+    for (let f = 1000; f < spec.fmax; f += 1000) {
+      const y = sTop + sH * (1 - f / ((spec.bins - 1) * spec.bin_hz));
+      g.fillRect(0, y, 4 * k, 1); g.fillText(f / 1000 + ' kHz', 6 * k, y);
+    }
+    g.textBaseline = 'top';
+  }
   // time grid
   g.font = `${11 * k}px system-ui`; g.fillStyle = '#8f97a6';
   const step = W <= 10 ? 1 : W <= 20 ? 2 : W <= 40 ? 5 : 10;
@@ -333,7 +413,7 @@ function drawMain() {
   if (drag && drag.kind === 'new' && drag.moved) {
     g.fillStyle = 'rgba(255,180,84,0.3)';
     const a = Math.min(drag.T0, drag.T1), b = Math.max(drag.T0, drag.T1);
-    g.fillRect(X(a), top, X(b) - X(a), hh);
+    g.fillRect(X(a), top, X(b) - X(a), full);
   }
   g.fillStyle = '#ff5c5c'; g.fillRect(X(pos), 0, 2 * k, h);
 }
@@ -444,6 +524,9 @@ function renderZooms() {
 }
 $('zooms').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) zoomTo(+b.dataset.z); b && b.blur(); });
 $('bPlay').onclick = (e) => { e.currentTarget.blur(); playing ? pause() : play(); };
+$('bSpec').onclick = (e) => { specOn = !specOn; e.currentTarget.classList.toggle('on', specOn); e.currentTarget.blur(); draw(); };
+$('cLo').oninput = (e) => { specLo = +e.target.value; draw(); };
+$('cLo').onchange = (e) => e.target.blur();
 $('bDb').onclick = (e) => { dbView = !dbView; e.currentTarget.classList.toggle('on', dbView); e.currentTarget.blur(); draw(); };
 
 window.addEventListener('keydown', (e) => {
@@ -465,7 +548,7 @@ window.addEventListener('resize', draw);
 
 async function init() {
   const info = await (await fetch('/api/test/info')).json();
-  peakMs = info.peak_ms; peakScale = info.peak_scale;
+  peakMs = info.peak_ms; peakScale = info.peak_scale; spec = info.spec;
   let off = 0;
   L = info.lectures.map(x => { const l = { ...x, off }; off += x.dur; return l; });
   total = off;

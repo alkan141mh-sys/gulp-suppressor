@@ -31,6 +31,11 @@ TEST_ORDER = sorted(gulpdata.TEST_LECTURES)
 TEST_VALID = {'gulp_low', 'gulp', 'gulp_high', 'gulp_overlap', 'unsure'}
 PEAK_MS = 5                      # one waveform column per 5 ms
 PEAK_SCALE = 2.5                 # byte = 2.5 * 20 log10(peak sample), 0..226
+# Spectrogram for the labelling page: 1024-sample Hann window (21 ms at 48 kHz, 47 Hz bins),
+# one column per 5 ms, 0..8 kHz, in chunks of 10 s. Byte = dB re full scale mapped
+# SPEC_DB_LO..SPEC_DB_HI -> 0..255.
+SPEC_WIN, SPEC_HOP_MS, SPEC_FMAX, SPEC_CHUNK_S = 1024, 5, 8000, 10
+SPEC_DB_LO, SPEC_DB_HI = -110.0, -20.0
 
 
 def wav_info(lec):
@@ -51,6 +56,27 @@ def test_peaks(lec):
         b.tofile(p)
     with open(p, 'rb') as f:
         return f.read()
+
+
+def test_spec(lec, c):
+    """Spectrogram chunk c (seconds 10c .. 10c+10) as uint8, frame-major (frames x bins)."""
+    fs, n = wav_info(lec)
+    hop = fs * SPEC_HOP_MS // 1000
+    nf = SPEC_CHUNK_S * 1000 // SPEC_HOP_MS
+    nb = int(SPEC_FMAX * SPEC_WIN / fs) + 1
+    c0 = c * SPEC_CHUNK_S * fs                       # sample at the centre of frame 0
+    a, b = c0 - SPEC_WIN // 2, c0 + (nf - 1) * hop + SPEC_WIN // 2
+    lo, hi = max(0, a), min(n, b)
+    x = np.zeros(b - a, np.float32)
+    if hi > lo:
+        seg, _ = gulpdata.read_wav(lec, lo / fs, hi / fs)
+        x[lo - a:lo - a + len(seg)] = seg
+    w = np.hanning(SPEC_WIN).astype(np.float32)
+    idx = np.arange(nf)[:, None] * hop + np.arange(SPEC_WIN)[None, :]
+    X = np.fft.rfft(x[idx] * w, axis=1)[:, :nb]
+    db = 20 * np.log10(np.abs(X) / (w.sum() / 2 * 32768) + 1e-12)   # 0 dB = full-scale sine
+    q = np.clip((db - SPEC_DB_LO) / (SPEC_DB_HI - SPEC_DB_LO) * 255, 0, 255).astype(np.uint8)
+    return q.tobytes(), nf, nb
 
 
 def test_state():
@@ -137,7 +163,25 @@ class Handler(BaseHTTPRequestHandler):
             for l in TEST_ORDER:
                 fs, n = wav_info(l)
                 info.append({'lec': l, 'dur': n / fs})
-            self._json({'lectures': info, 'peak_ms': PEAK_MS, 'peak_scale': PEAK_SCALE, **test_state()})
+            fs, _ = wav_info(TEST_ORDER[0])
+            spec = {'hop_ms': SPEC_HOP_MS, 'chunk_s': SPEC_CHUNK_S, 'fmax': SPEC_FMAX,
+                    'bins': int(SPEC_FMAX * SPEC_WIN / fs) + 1, 'bin_hz': fs / SPEC_WIN,
+                    'db_lo': SPEC_DB_LO, 'db_hi': SPEC_DB_HI}
+            self._json({'lectures': info, 'peak_ms': PEAK_MS, 'peak_scale': PEAK_SCALE, 'spec': spec, **test_state()})
+        elif u.path == '/api/test/spec':
+            try:
+                lec, c = q['lec'][0], int(q['c'][0])
+                if lec not in TEST_ORDER or not 0 <= c < 10000:
+                    raise ValueError
+                body, _, _ = test_spec(lec, c)
+            except (KeyError, ValueError):
+                return self._json({'error': 'bad request'}, 400)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/octet-stream')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'max-age=86400')
+            self.end_headers()
+            self.wfile.write(body)
         elif u.path == '/api/test/peaks':
             lec = q.get('lec', [''])[0]
             if lec not in TEST_ORDER:
