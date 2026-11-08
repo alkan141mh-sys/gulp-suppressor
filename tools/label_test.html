@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test Etiketleme</title>
+<style>
+  :root {
+    --bg: #15171c; --panel: #1d2027; --line: #2a2e38; --fg: #e7e9ee; --muted: #8f97a6;
+    --accent: #5cc8a8; --wave: #6f8fbf; --gulp: #ffb454; --unsure: #9a8fd6; --head: #ff5c5c; --heard: #3f7f5f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 12px 16px 24px; }
+  .hdr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 10px; }
+  .hdr b { font-size: 16px; }
+  .stat { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .stat strong { color: var(--fg); font-weight: 600; }
+  #saved { margin-left: auto; color: var(--muted); font-size: 13px; }
+  canvas { display: block; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  #ov { height: 70px; cursor: pointer; margin-bottom: 8px; }
+  #main { height: 300px; cursor: crosshair; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+  button { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
+           padding: 6px 10px; font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  .pos { font: 15px ui-monospace, Consolas, monospace; min-width: 150px; }
+  .lab { display: inline-flex; align-items: center; gap: 6px; }
+  .kbd { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; background: #2a2e38;
+         color: var(--accent); font: 12px ui-monospace, monospace; text-align: center; }
+  .cols { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-top: 6px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  .help { color: var(--muted); font-size: 13px; margin: 0; padding-left: 18px; }
+  .help li { margin: 2px 0; }
+  #list { max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+  #list div { display: flex; justify-content: space-between; padding: 4px 10px; border-bottom: 1px solid var(--line);
+              cursor: pointer; font-variant-numeric: tabular-nums; }
+  #list div:hover { background: var(--panel); }
+  #list div.sel { background: #26303a; }
+  h3 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <b>Test dersleri 037–040 · gulp etiketleme</b>
+    <span class="stat">Dinlenen: <strong id="heard">0%</strong></span>
+    <span class="stat">Etiket: <strong id="nlab">0</strong></span>
+    <span id="saved">yükleniyor…</span>
+  </div>
+  <canvas id="ov"></canvas>
+  <canvas id="main"></canvas>
+  <div class="bar">
+    <button id="bPlay">▶ Oynat <span class="kbd">Space</span></button>
+    <span class="pos" id="pos">037 00:00.000</span>
+    <span class="stat">Pencere:</span>
+    <span id="zooms"></span>
+    <button id="bDb" class="on" title="Sessiz sesleri görünür yapar">dB görünüm</button>
+    <span class="stat" style="margin-left:auto">Seçili etiketi değiştir:</span>
+    <span class="lab"><span class="kbd">1</span>az</span>
+    <span class="lab"><span class="kbd">2</span>gulp</span>
+    <span class="lab"><span class="kbd">3</span>çok belirgin</span>
+    <span class="lab"><span class="kbd">O</span>konuşma üstünde</span>
+    <span class="lab"><span class="kbd">U</span>emin değilim</span>
+  </div>
+  <div class="cols">
+    <ul class="help">
+      <li>Dersleri baştan sona <b>normal hızda</b> dinle. Duyduğun her gulp'ı işaretle; nefes vb. ile uğraşma.</li>
+      <li><b>Sürükle</b>: yeni gulp etiketi (önce <i>gulp</i> olur, <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">O</span> <span class="kbd">U</span> ile değiştir).</li>
+      <li><b>Tıkla</b>: oynatma imlecini oraya taşı. <b>Etiketin üstüne tıkla</b>: seç. <b>Kenarını sürükle</b>: sınırını düzelt.</li>
+      <li><b>Çift tık</b> ya da <span class="kbd">Enter</span>: seçili etiketi çal · <span class="kbd">P</span>: 1 s önce ve sonrasıyla çal.</li>
+      <li><b>Sağ tık</b> ya da <span class="kbd">Del</span>: etiketi sil.</li>
+      <li><span class="kbd">←</span> <span class="kbd">→</span>: 2 s geri / ileri (Shift ile 10 s) · <b>Tekerlek</b>: kaydır, Ctrl+tekerlek: yakınlaştır · <span class="kbd">+</span> <span class="kbd">−</span>: pencere.</li>
+      <li>Üstteki şerit dört dersin tamamı; altındaki yeşil çizgi dinlediğin kısımlar. Sayfa açılınca kaldığın yerden devam eder.</li>
+      <li>Her değişiklik kendiliğinden kaydedilir. Bu sayfada hiçbir dedektör bilgisi yok.</li>
+    </ul>
+    <div>
+      <h3>Etiketler</h3>
+      <div id="list"></div>
+    </div>
+  </div>
+</div>
+<audio id="audio" preload="auto"></audio>
+<script>
+const $ = (id) => document.getElementById(id);
+const audio = $('audio');
+const ZOOMS = [5, 10, 20, 40, 80];
+const KEYS = { '1': 'gulp_low', '2': 'gulp', '3': 'gulp_high', 'o': 'gulp_overlap', 'u': 'unsure' };
+const SHORT = { gulp_low: 'az', gulp: 'gulp', gulp_high: 'belirgin', gulp_overlap: 'üstünde', unsure: '?' };
+
+let L = [], total = 0, peakMs = 5, peakScale = 2.5;
+let labels = {}, listened = {};
+let pos = 0;                 // playhead, global seconds
+let view0 = 0, W = 10;       // main view: [view0, view0 + W)
+let dbView = true, floorDb = 36;   // floorDb: room noise, the 1st percentile of the 5 ms peaks
+let sel = null;              // { lec, i }
+let curLec = null, playing = false, stopAt = null, lastT = null;
+let dirty = false, saveTimer = 0;
+
+// ---------- time mapping ----------
+function toLocal(T) {
+  for (const l of L) if (T < l.off + l.dur) return { l, t: Math.max(0, T - l.off) };
+  const l = L[L.length - 1]; return { l, t: l.dur };
+}
+const G = (lec, t) => L.find(x => x.lec === lec).off + t;
+function fmt(T, ms = true) {
+  const { l, t } = toLocal(T);
+  const m = Math.floor(t / 60), s = t - 60 * m;
+  return `${l.lec} ${String(m).padStart(2, '0')}:${ms ? s.toFixed(3).padStart(6, '0') : String(Math.floor(s)).padStart(2, '0')}`;
+}
+
+// ---------- intervals ----------
+function addHeard(lec, a, b) {
+  const v = listened[lec];
+  v.push([a, b]);
+  v.sort((x, y) => x[0] - y[0]);
+  const out = [];
+  for (const [x, y] of v) {
+    if (out.length && x <= out[out.length - 1][1] + 0.3) out[out.length - 1][1] = Math.max(out[out.length - 1][1], y);
+    else out.push([x, y]);
+  }
+  listened[lec] = out;
+}
+function heardFrac() {
+  let h = 0;
+  for (const l of L) for (const [a, b] of listened[l.lec]) h += b - a;
+  return h / total;
+}
+function firstUnheard() {
+  for (const l of L) {
+    let t = 0;
+    for (const [a, b] of listened[l.lec]) { if (a > t + 2) break; t = Math.max(t, b); }
+    if (t < l.dur - 2) return l.off + t;
+  }
+  return 0;
+}
+
+// ---------- save ----------
+function markDirty(now = false) {
+  dirty = true;
+  $('saved').textContent = 'kaydedilecek…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, now ? 300 : 5000);
+}
+async function save() {
+  if (!dirty) return;
+  dirty = false;
+  try {
+    const r = await fetch('/api/test/save', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ labels, listened }) });
+    if (!r.ok) throw new Error(r.status);
+    $('saved').textContent = 'kaydedildi ' + new Date().toLocaleTimeString('tr-TR');
+  } catch (e) {
+    dirty = true;
+    $('saved').textContent = 'KAYDEDİLEMEDİ (sunucu kapalı mı?)';
+  }
+}
+window.addEventListener('beforeunload', () => {
+  if (dirty) navigator.sendBeacon('/api/test/save', new Blob([JSON.stringify({ labels, listened })], { type: 'application/json' }));
+});
+
+// ---------- audio ----------
+function loadLec(l) {
+  return new Promise((res) => {
+    if (curLec === l.lec) return res();
+    curLec = l.lec;
+    audio.src = '/api/test/audio?lec=' + l.lec;
+    audio.addEventListener('loadedmetadata', () => res(), { once: true });
+  });
+}
+async function seek(T, keepPlaying = true) {
+  T = Math.max(0, Math.min(total - 0.001, T));
+  pos = T;
+  lastT = null;
+  const { l, t } = toLocal(T);
+  const was = playing;
+  await loadLec(l);
+  audio.currentTime = t;
+  if (was && keepPlaying) audio.play();
+  follow(true);
+  draw();
+}
+async function play(from = null, to = null) {
+  if (from !== null) await seek(from, false);
+  stopAt = to;
+  lastT = null;
+  const { l } = toLocal(pos);
+  await loadLec(l);
+  await audio.play();
+}
+function pause() { audio.pause(); stopAt = null; }
+audio.addEventListener('play', () => { playing = true; $('bPlay').innerHTML = '❚❚ Durdur <span class="kbd">Space</span>'; });
+audio.addEventListener('pause', () => { playing = false; lastT = null; $('bPlay').innerHTML = '▶ Oynat <span class="kbd">Space</span>'; markDirty(); });
+audio.addEventListener('ended', async () => {
+  const i = L.findIndex(x => x.lec === curLec);
+  if (i < L.length - 1 && stopAt === null) { await seek(L[i + 1].off, false); play(); }
+});
+
+// Playback bookkeeping runs on a timer, not on animation frames: frames stop while the tab is in
+// the background, and listening with the page hidden must still count. Background timers fire
+// about once a second, so a step of up to 1.5 s of continuous playback counts as heard (a seek
+// resets lastT, so a jump never does).
+function step() {
+  if (!playing || !curLec) return;
+  const t = audio.currentTime, l = L.find(x => x.lec === curLec);
+  pos = l.off + t;
+  if (lastT !== null && t >= lastT && t - lastT < 1.5) addHeard(curLec, lastT, t);
+  lastT = t;
+  if (stopAt !== null && pos >= stopAt) { pause(); pos = stopAt; }
+  if (!dirty) { dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(save, 15000); }
+}
+setInterval(step, 30);
+function tick() {
+  if (playing) { step(); follow(false); draw(); }
+  requestAnimationFrame(tick);
+}
+function follow(center) {
+  if (center && (pos < view0 || pos > view0 + W)) view0 = pos - 0.2 * W;
+  else if (pos > view0 + 0.92 * W) view0 = pos - 0.1 * W;       // page forward while playing
+  view0 = Math.max(0, Math.min(total - W, view0));
+}
+
+// ---------- drawing ----------
+const dpr = () => window.devicePixelRatio || 1;
+function fit(c) {
+  const r = c.getBoundingClientRect(), k = dpr();
+  if (c.width !== Math.round(r.width * k) || c.height !== Math.round(r.height * k)) {
+    c.width = Math.round(r.width * k); c.height = Math.round(r.height * k);
+  }
+  return c.getContext('2d');
+}
+function colPeak(l, i0, i1) {
+  let m = 0;
+  const p = l.peaks;
+  for (let i = Math.max(0, i0); i < Math.min(p.length, i1); i++) if (p[i] > m) m = p[i];
+  return m / peakScale;                     // dB above 1 LSB
+}
+function amp(db) {
+  if (dbView) return Math.max(0, (db - floorDb) / (90.3 - floorDb));   // room noise .. full scale
+  return Math.pow(10, db / 20) / 32768;
+}
+function drawWave(g, w, h, t0, t1, top, hh, color) {
+  const cols = Math.floor(w);
+  if (cols <= 0) return;
+  g.fillStyle = color;
+  const mid = top + hh / 2;
+  for (let x = 0; x < cols; x++) {
+    const a = t0 + (t1 - t0) * x / cols, b = t0 + (t1 - t0) * (x + 1) / cols;
+    let db = 0;
+    for (const l of L) {
+      if (b <= l.off || a >= l.off + l.dur) continue;
+      const i0 = Math.floor((a - l.off) * 1000 / peakMs), i1 = Math.ceil((b - l.off) * 1000 / peakMs);
+      db = Math.max(db, colPeak(l, i0, Math.max(i1, i0 + 1)));
+    }
+    const y = Math.min(1, amp(db)) * hh / 2;
+    if (y > 0.3) g.fillRect(x, mid - y, 1, 2 * y);
+  }
+}
+function drawOverview() {
+  const c = $('ov'), g = fit(c), w = c.width, h = c.height, k = dpr();
+  g.clearRect(0, 0, w, h);
+  drawWave(g, w, h, 0, total, 4 * k, h - 14 * k, '#4a5f80');
+  const X = (T) => T / total * w;
+  // listened
+  g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--heard');
+  for (const l of L) for (const [a, b] of listened[l.lec]) g.fillRect(X(l.off + a), h - 6 * k, Math.max(1, X(l.off + b) - X(l.off + a)), 5 * k);
+  // lecture boundaries
+  g.font = `${11 * k}px system-ui`; g.textBaseline = 'top';
+  for (const l of L) {
+    g.fillStyle = '#8f97a6'; g.fillRect(X(l.off), 0, 1, h);
+    g.fillText(l.lec, X(l.off) + 4 * k, 2 * k);
+  }
+  // labels
+  for (const l of L) for (const [a, b, lab] of labels[l.lec]) {
+    g.fillStyle = lab === 'unsure' ? '#9a8fd6' : '#ffb454';
+    g.fillRect(X(l.off + a) - k, 14 * k, 2 * k, h - 24 * k);
+  }
+  // view + playhead
+  g.strokeStyle = '#e7e9ee'; g.lineWidth = k;
+  g.strokeRect(X(view0), 1, Math.max(2, X(view0 + W) - X(view0)), h - 2);
+  g.fillStyle = '#ff5c5c'; g.fillRect(X(pos), 0, 2 * k, h);
+}
+function spanAtX(px) {     // label under a main-canvas x (css px) -> {lec,i,edge}
+  const c = $('main'), w = c.getBoundingClientRect().width;
+  const T = view0 + px / w * W, tol = 6 / w * W;
+  let best = null;
+  for (const l of L) labels[l.lec].forEach(([a, b], i) => {
+    const A = l.off + a, B = l.off + b;
+    if (Math.abs(T - A) <= tol) best = { lec: l.lec, i, edge: 0 };
+    else if (Math.abs(T - B) <= tol) best = { lec: l.lec, i, edge: 1 };
+    else if (!best && T > A && T < B) best = { lec: l.lec, i, edge: null };
+  });
+  return best;
+}
+function drawMain() {
+  const c = $('main'), g = fit(c), w = c.width, h = c.height, k = dpr();
+  g.clearRect(0, 0, w, h);
+  const X = (T) => (T - view0) / W * w;
+  const top = 22 * k, hh = h - 30 * k;
+  // unheard parts darker
+  g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#1d2027';
+  for (const l of L) for (const [a, b] of listened[l.lec]) {
+    const x0 = X(l.off + a), x1 = X(l.off + b);
+    if (x1 > 0 && x0 < w) g.fillRect(x0, 0, x1 - x0, h);
+  }
+  // labels
+  g.font = `bold ${12 * k}px system-ui`; g.textBaseline = 'top';
+  for (const l of L) labels[l.lec].forEach(([a, b, lab], i) => {
+    const x0 = X(l.off + a), x1 = X(l.off + b);
+    if (x1 < 0 || x0 > w) return;
+    const isSel = sel && sel.lec === l.lec && sel.i === i;
+    const col = lab === 'unsure' ? '154,143,214' : '255,180,84';
+    g.fillStyle = `rgba(${col},${isSel ? 0.35 : 0.18})`; g.fillRect(x0, top, x1 - x0, hh);
+    g.fillStyle = `rgb(${col})`;
+    g.fillRect(x0, top, (isSel ? 2 : 1) * k, hh); g.fillRect(x1 - (isSel ? 2 : 1) * k, top, (isSel ? 2 : 1) * k, hh);
+    g.fillText(SHORT[lab], x0 + 3 * k, top + 3 * k);
+  });
+  drawWave(g, w, h, view0, view0 + W, top, hh, '#6f8fbf');
+  // time grid
+  g.font = `${11 * k}px system-ui`; g.fillStyle = '#8f97a6';
+  const step = W <= 10 ? 1 : W <= 20 ? 2 : W <= 40 ? 5 : 10;
+  for (let T = Math.ceil(view0 / step) * step; T < view0 + W; T += step) {
+    const x = X(T);
+    g.fillRect(x, top - 4 * k, 1, 4 * k);
+    g.fillText(fmt(T, false), x + 2 * k, 4 * k);
+  }
+  for (const l of L) if (l.off > view0 && l.off < view0 + W) {
+    g.fillStyle = '#e7e9ee'; g.fillRect(X(l.off), 0, 2 * k, h);
+    g.fillText('ders ' + l.lec, X(l.off) + 4 * k, top + 4 * k);
+  }
+  if (drag && drag.kind === 'new' && drag.moved) {
+    g.fillStyle = 'rgba(255,180,84,0.3)';
+    const a = Math.min(drag.T0, drag.T1), b = Math.max(drag.T0, drag.T1);
+    g.fillRect(X(a), top, X(b) - X(a), hh);
+  }
+  g.fillStyle = '#ff5c5c'; g.fillRect(X(pos), 0, 2 * k, h);
+}
+function renderList() {
+  const rows = [];
+  for (const l of L) labels[l.lec].forEach(([a, b, lab], i) => rows.push({ lec: l.lec, i, a, b, lab }));
+  $('list').innerHTML = rows.map(r =>
+    `<div data-lec="${r.lec}" data-i="${r.i}" class="${sel && sel.lec === r.lec && sel.i === r.i ? 'sel' : ''}">` +
+    `<span>${fmt(G(r.lec, r.a))}</span><span>${r.lab}</span><span class="stat">${((r.b - r.a) * 1000).toFixed(0)} ms</span></div>`).join('');
+  const n = rows.filter(r => r.lab !== 'unsure').length, u = rows.length - n;
+  $('nlab').textContent = `${n} gulp` + (u ? ` + ${u} emin değil` : '');
+}
+function draw() {
+  drawOverview(); drawMain();
+  $('pos').textContent = fmt(pos);
+  $('heard').textContent = (100 * heardFrac()).toFixed(1) + '%';
+}
+
+// ---------- editing ----------
+function select(s) { sel = s; renderList(); draw(); }
+function setLabel(lab) {
+  if (!sel) return;
+  labels[sel.lec][sel.i][2] = lab;
+  markDirty(true); renderList(); draw();
+}
+function del() {
+  if (!sel) return;
+  labels[sel.lec].splice(sel.i, 1);
+  sel = null; markDirty(true); renderList(); draw();
+}
+function resort(lec, keep) {
+  labels[lec].sort((x, y) => x[0] - y[0]);
+  sel = { lec, i: labels[lec].indexOf(keep) };
+}
+
+let drag = null;
+const mainT = (e) => { const r = $('main').getBoundingClientRect(); return view0 + (e.clientX - r.left) / r.width * W; };
+$('main').addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  const r = $('main').getBoundingClientRect();
+  const hit = spanAtX(e.clientX - r.left), T = mainT(e);
+  if (hit && hit.edge !== null) drag = { kind: 'edge', ...hit, x: e.clientX, moved: false };
+  else if (hit) { drag = { kind: 'sel', ...hit, x: e.clientX, moved: false }; select({ lec: hit.lec, i: hit.i }); }
+  else drag = { kind: 'new', T0: T, T1: T, x: e.clientX, moved: false };
+});
+window.addEventListener('mousemove', (e) => {
+  if (!drag) return;
+  if (Math.abs(e.clientX - drag.x) > 4) drag.moved = true;
+  if (!drag.moved) return;
+  const T = Math.max(0, Math.min(total, mainT(e)));
+  if (drag.kind === 'new') drag.T1 = T;
+  else if (drag.kind === 'edge') {
+    const span = labels[drag.lec][drag.i], off = G(drag.lec, 0);
+    const t = Math.max(0, T - off);
+    if (drag.edge === 0) span[0] = Math.min(t, span[1] - 0.01); else span[1] = Math.max(t, span[0] + 0.01);
+    sel = { lec: drag.lec, i: drag.i };
+  }
+  draw();
+});
+window.addEventListener('mouseup', () => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.kind === 'new' && d.moved) {
+    const a = Math.min(d.T0, d.T1), b = Math.max(d.T0, d.T1);
+    const A = toLocal(a), B = toLocal(b - 1e-6);
+    if (A.l.lec === B.l.lec && b - a >= 0.03 && b - a <= 10) {
+      const span = [A.t, A.t + (b - a), 'gulp'];
+      labels[A.l.lec].push(span); resort(A.l.lec, span);
+      markDirty(true); renderList();
+    }
+  } else if (d.kind === 'new') seek(d.T0);
+  else if (d.kind === 'edge' && d.moved) { const span = labels[d.lec][d.i]; resort(d.lec, span); markDirty(true); renderList(); }
+  draw();
+});
+$('main').addEventListener('dblclick', (e) => {
+  const r = $('main').getBoundingClientRect(), hit = spanAtX(e.clientX - r.left);
+  if (hit) { const [a, b] = labels[hit.lec][hit.i]; play(G(hit.lec, a), G(hit.lec, b)); }
+});
+$('main').addEventListener('contextmenu', (e) => {
+  const r = $('main').getBoundingClientRect(), hit = spanAtX(e.clientX - r.left);
+  if (hit) { e.preventDefault(); sel = { lec: hit.lec, i: hit.i }; del(); }
+});
+$('main').addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (e.ctrlKey) { zoomTo(ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(W) + (e.deltaY > 0 ? 1 : -1)))]); return; }
+  view0 = Math.max(0, Math.min(total - W, view0 + (e.deltaY + e.deltaX) / 400 * W));
+  draw();
+}, { passive: false });
+$('ov').addEventListener('mousedown', (e) => {
+  const r = $('ov').getBoundingClientRect();
+  seek((e.clientX - r.left) / r.width * total);
+});
+$('list').addEventListener('click', (e) => {
+  const d = e.target.closest('div[data-lec]'); if (!d) return;
+  const s = { lec: d.dataset.lec, i: +d.dataset.i };
+  const [a, b] = labels[s.lec][s.i];
+  sel = s; renderList();
+  play(G(s.lec, a) - 1, G(s.lec, b) + 1);
+});
+
+function zoomTo(z) {
+  const c = view0 + W / 2;
+  W = z; view0 = Math.max(0, Math.min(total - W, (pos >= view0 && pos <= view0 + W ? pos : c) - W / 2));
+  renderZooms(); draw();
+}
+function renderZooms() {
+  $('zooms').innerHTML = ZOOMS.map(z => `<button data-z="${z}" class="${z === W ? 'on' : ''}">${z} s</button>`).join(' ');
+}
+$('zooms').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) zoomTo(+b.dataset.z); b && b.blur(); });
+$('bPlay').onclick = (e) => { e.currentTarget.blur(); playing ? pause() : play(); };
+$('bDb').onclick = (e) => { dbView = !dbView; e.currentTarget.classList.toggle('on', dbView); e.currentTarget.blur(); draw(); };
+
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); playing ? pause() : play(); }
+  else if (KEYS[k]) setLabel(KEYS[k]);
+  else if (k === 'delete' || k === 'backspace') { e.preventDefault(); del(); }
+  else if (k === 'enter' && sel) { e.preventDefault(); const [a, b] = labels[sel.lec][sel.i]; play(G(sel.lec, a), G(sel.lec, b)); }
+  else if (k === 'p' && sel) { const [a, b] = labels[sel.lec][sel.i]; play(G(sel.lec, a) - 1, G(sel.lec, b) + 1); }
+  else if (k === 'arrowleft' || k === 'arrowright') {
+    e.preventDefault();
+    seek(pos + (k === 'arrowleft' ? -1 : 1) * (e.shiftKey ? 10 : 2));
+  }
+  else if (k === '+' || k === '=') zoomTo(ZOOMS[Math.max(0, ZOOMS.indexOf(W) - 1)]);
+  else if (k === '-') zoomTo(ZOOMS[Math.min(ZOOMS.length - 1, ZOOMS.indexOf(W) + 1)]);
+});
+window.addEventListener('resize', draw);
+
+async function init() {
+  const info = await (await fetch('/api/test/info')).json();
+  peakMs = info.peak_ms; peakScale = info.peak_scale;
+  let off = 0;
+  L = info.lectures.map(x => { const l = { ...x, off }; off += x.dur; return l; });
+  total = off;
+  labels = info.labels; listened = info.listened;
+  for (const l of L) { labels[l.lec] = labels[l.lec] || []; listened[l.lec] = listened[l.lec] || []; }
+  $('saved').textContent = 'dalga formu yükleniyor…';
+  await Promise.all(L.map(async l => { l.peaks = new Uint8Array(await (await fetch('/api/test/peaks?lec=' + l.lec)).arrayBuffer()); }));
+  floorDb = Math.min(...L.map(l => { const a = Array.from(l.peaks).sort((x, y) => x - y); return a[Math.floor(0.01 * a.length)] / peakScale; }));
+  $('saved').textContent = 'hazır';
+  renderZooms(); renderList();
+  await seek(firstUnheard(), false);
+  requestAnimationFrame(tick);
+}
+init();
+</script>
+</body>
+</html>
